@@ -76,49 +76,92 @@ public function index()
         ]);
     }
 
-    // POST: Menambahkan data dosen
-    public function create()
-    {
-        $data = $this->request->getJSON(true);
+   
+// POST: Menambahkan data dosen
+public function create()
+{
+    $data = $this->request->getJSON(true);
 
-        if (
-            !is_array($data) ||
-            empty($data['id_dosen']) ||
-            empty($data['nip']) ||
-            empty($data['nama'])
-        ) {
-            return $this->response
-                ->setStatusCode(400)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'ID dosen, NIP, dan nama wajib diisi'
-                ]);
-        }
+    if (
+        !is_array($data) ||
+        empty($data['id_dosen']) ||
+        empty($data['nip']) ||
+        empty($data['nama'])
+    ) {
+        return $this->response
+            ->setStatusCode(400)
+            ->setJSON([
+                'status'  => false,
+                'message' => 'ID dosen, NIP, dan nama wajib diisi'
+            ]);
+    }
 
-        try {
-            $this->dosenModel->insert($data);
+    // Periksa apakah ID sudah digunakan
+    if ($this->dosenModel->find($data['id_dosen'])) {
+        return $this->response
+            ->setStatusCode(409)
+            ->setJSON([
+                'status'  => false,
+                'message' => 'ID dosen sudah digunakan'
+            ]);
+    }
 
-            $dosenBaru = $this->dosenModel->find($data['id_dosen']);
+    try {
+        // Jalankan proses penyimpanan
+        $hasil = $this->dosenModel->insert($data);
 
-            return $this->response
-                ->setStatusCode(201)
-                ->setJSON([
-                    'status'  => true,
-                    'message' => 'Data dosen berhasil ditambahkan',
-                    'data'    => $dosenBaru
-                ]);
-
-        } catch (\Throwable $e) {
-            log_message('error', 'Gagal menambahkan data dosen: ' . $e->getMessage());
+        // Periksa apakah insert berhasil
+        if ($hasil === false) {
+            log_message(
+                'error',
+                'Gagal insert dosen: ' .
+                json_encode($this->dosenModel->errors())
+            );
 
             return $this->response
                 ->setStatusCode(500)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen gagal ditambahkan'
+                    'message' => 'Data dosen gagal disimpan',
+                    'errors'  => $this->dosenModel->errors()
                 ]);
         }
+
+        // Ambil kembali data yang sudah disimpan
+        $dosenBaru = $this->dosenModel->find($data['id_dosen']);
+
+        // Pastikan data benar-benar tersedia
+        if (!$dosenBaru) {
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Insert berhasil dipanggil, tetapi data tidak ditemukan'
+                ]);
+        }
+
+        return $this->response
+            ->setStatusCode(201)
+            ->setJSON([
+                'status'  => true,
+                'message' => 'Data dosen berhasil ditambahkan',
+                'data'    => $dosenBaru
+            ]);
+
+    } catch (\Throwable $e) {
+        log_message(
+            'error',
+            'Gagal menambahkan data dosen: ' . $e->getMessage()
+        );
+
+        return $this->response
+            ->setStatusCode(500)
+            ->setJSON([
+                'status'  => false,
+                'message' => 'Data dosen gagal ditambahkan'
+            ]);
     }
+}
 
     // PUT: Mengubah data dosen berdasarkan ID
     public function update($id)
