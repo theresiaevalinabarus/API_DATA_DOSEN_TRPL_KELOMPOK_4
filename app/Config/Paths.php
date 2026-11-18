@@ -27,7 +27,7 @@ class Paths
      *
      * Use /tmp because Hostless has a read-only filesystem.
      */
-    public string $writableDirectory = '/tmp/ci-writable';
+    public string $writableDirectory = '/tmp/ci-writable/';
 
     /**
      * TESTS DIRECTORY NAME
