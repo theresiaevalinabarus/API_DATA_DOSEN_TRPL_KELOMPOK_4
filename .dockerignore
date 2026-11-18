@@ -1,0 +1,17 @@
+
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+.github
+
+vendor/
+writable/cache/*
+writable/logs/*
+writable/session/*
+writable/debugbar/*
+
+tests/
+.phpunit.cache/
