@@ -1,3 +1,4 @@
+
 FROM php:8.2-cli
 
 RUN apt-get update && apt-get install -y \
@@ -15,11 +16,6 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-RUN mkdir -p /tmp/ci-writable/cache \
-    /tmp/ci-writable/logs \
-    /tmp/ci-writable/session \
-    /tmp/ci-writable/uploads
-
 EXPOSE 8080
 
-CMD ["sh", "-c", "php spark serve --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "mkdir -p /tmp/ci-writable/cache /tmp/ci-writable/logs /tmp/ci-writable/session /tmp/ci-writable/uploads && php spark serve --host 0.0.0.0 --port ${PORT:-8080}"]
