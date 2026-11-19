@@ -110,10 +110,10 @@ class Dosen extends BaseController
 
         try {
 
-            // Jalankan proses penyimpanan
+            // Proses penyimpanan data dosen
             $hasil = $this->dosenModel->insert($data);
 
-            // Periksa apakah insert berhasil
+            // Jika proses insert gagal
             if ($hasil === false) {
 
                 // Ambil informasi error database
@@ -123,7 +123,7 @@ class Dosen extends BaseController
                 $lastQuery = (string)
                     $this->dosenModel->db->getLastQuery();
 
-                // Catat error database ke log
+                // Catat error ke log
                 log_message(
                     'error',
                     'Gagal insert dosen. DB ERROR: ' .
@@ -138,16 +138,17 @@ class Dosen extends BaseController
                 return $this->response
                     ->setStatusCode(500)
                     ->setJSON([
-                        'status'  => false,
-                        'message' => 'Data dosen gagal disimpan',
-                        'errors'  => $this->dosenModel->errors()
+                        'status'     => false,
+                        'message'    => 'Data dosen gagal disimpan',
+                        'errors'     => $this->dosenModel->errors(),
+                        'db_error'   => $dbError,
+                        'last_query' => $lastQuery
                     ]);
             }
 
             // Ambil kembali data yang sudah disimpan
             $dosenBaru = $this->dosenModel->find($data['id_dosen']);
 
-            // Pastikan data benar-benar tersedia
             if (!$dosenBaru) {
                 return $this->response
                     ->setStatusCode(500)
@@ -157,6 +158,7 @@ class Dosen extends BaseController
                     ]);
             }
 
+            // Jika berhasil
             return $this->response
                 ->setStatusCode(201)
                 ->setJSON([
@@ -167,7 +169,7 @@ class Dosen extends BaseController
 
         } catch (\Throwable $e) {
 
-            // Catat error jika terjadi exception
+            // Catat error exception
             log_message(
                 'error',
                 'Gagal menambahkan data dosen: ' .
@@ -178,7 +180,8 @@ class Dosen extends BaseController
                 ->setStatusCode(500)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen gagal ditambahkan'
+                    'message' => 'Data dosen gagal ditambahkan',
+                    'debug_error' => $e->getMessage()
                 ]);
         }
     }
