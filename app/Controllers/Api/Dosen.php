@@ -109,21 +109,15 @@ class Dosen extends BaseController
         }
 
         try {
-
             // Proses penyimpanan data dosen
             $hasil = $this->dosenModel->insert($data);
 
-            // Jika proses insert gagal
             if ($hasil === false) {
-
-                // Ambil informasi error database
                 $dbError = $this->dosenModel->db->error();
 
-                // Ambil query terakhir
                 $lastQuery = (string)
                     $this->dosenModel->db->getLastQuery();
 
-                // Catat error ke log
                 log_message(
                     'error',
                     'Gagal insert dosen. DB ERROR: ' .
@@ -147,7 +141,9 @@ class Dosen extends BaseController
             }
 
             // Ambil kembali data yang sudah disimpan
-            $dosenBaru = $this->dosenModel->find($data['id_dosen']);
+            $dosenBaru = $this->dosenModel->find(
+                $data['id_dosen']
+            );
 
             if (!$dosenBaru) {
                 return $this->response
@@ -158,7 +154,6 @@ class Dosen extends BaseController
                     ]);
             }
 
-            // Jika berhasil
             return $this->response
                 ->setStatusCode(201)
                 ->setJSON([
@@ -169,7 +164,6 @@ class Dosen extends BaseController
 
         } catch (\Throwable $e) {
 
-            // Catat error exception
             log_message(
                 'error',
                 'Gagal menambahkan data dosen: ' .
@@ -179,8 +173,8 @@ class Dosen extends BaseController
             return $this->response
                 ->setStatusCode(500)
                 ->setJSON([
-                    'status'  => false,
-                    'message' => 'Data dosen gagal ditambahkan',
+                    'status'      => false,
+                    'message'     => 'Data dosen gagal ditambahkan',
                     'debug_error' => $e->getMessage()
                 ]);
         }
@@ -282,10 +276,11 @@ class Dosen extends BaseController
         }
     }
 
-    // GET: Memfilter dosen berdasarkan status aktivitas
+    // GET: Memfilter dosen berdasarkan jabatan dan status aktivitas
     public function filter()
     {
         $status = $this->request->getGet('status');
+        $jabatan = $this->request->getGet('jabatan');
 
         if (empty($status)) {
             return $this->response
@@ -296,10 +291,19 @@ class Dosen extends BaseController
                 ]);
         }
 
-        $data = $this->dosenModel
+        $builder = $this->dosenModel
             ->select(['id_dosen', 'nama'])
-            ->where('status_aktivitas', $status)
-            ->findAll();
+            ->where('status_aktivitas', $status);
+
+        // Filter jabatan jika parameter dikirim
+        if (!empty($jabatan)) {
+            $builder->where(
+                'jabatan_fungsional',
+                $jabatan
+            );
+        }
+
+        $data = $builder->findAll();
 
         return $this->response->setJSON([
             'status'      => true,
