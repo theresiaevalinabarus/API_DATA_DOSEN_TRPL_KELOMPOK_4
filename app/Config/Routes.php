@@ -20,27 +20,36 @@ $routes->get('dashboard', 'Dashboard::index');
 // KHUSUS READ / GET
 // =====================================
 
+// =====================================
+// API DATA DOSEN TRPL KELOMPOK 4
+// =====================================
+
 $routes->group('api', [
     'namespace' => 'App\Controllers\Api'
 ], function ($routes) {
 
-    // CEK KONEKSI DATABASE
+    // GET: Dapat diakses kelompok lain
     $routes->get('cek-koneksi', 'Dosen::cekKoneksi');
-
-    // MENAMPILKAN SEMUA DATA DOSEN
     $routes->get('dosen', 'Dosen::index');
-
-    // MENCARI DATA DOSEN BERDASARKAN NAMA
     $routes->get('dosen/search', 'Dosen::search');
-
-    // FILTER DATA DOSEN
     $routes->get('dosen/filter', 'Dosen::filter');
-
-    // MENAMPILKAN DETAIL DOSEN BERDASARKAN ID
     $routes->get('dosen/(:segment)', 'Dosen::show/$1');
 
-});
+    // POST: Menambah data (wajib API Key)
+    $routes->post('dosen', 'Dosen::store', [
+        'filter' => 'apiKey'
+    ]);
 
+    // PUT: Mengubah data (wajib API Key)
+    $routes->put('dosen/(:num)', 'Dosen::update/$1', [
+        'filter' => 'apiKey'
+    ]);
+
+    // DELETE: Menghapus data (wajib API Key)
+    $routes->delete('dosen/(:num)', 'Dosen::delete/$1', [
+        'filter' => 'apiKey'
+    ]);
+});
 
 // =====================================
 // WEBSITE DATA DOSEN
