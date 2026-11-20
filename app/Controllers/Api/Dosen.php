@@ -14,50 +14,111 @@ class Dosen extends BaseController
         $this->dosenModel = new DosenModel();
     }
 
-    // GET: Menampilkan ID dan nama dosen
-    public function index()
+    /**
+     * Query data dosen.
+     * API hanya menampilkan tiga kolom:
+     * id_dosen, kode_dosen, dan nama.
+     */
+    private function queryDosen()
     {
-        $data = $this->dosenModel
-            ->select(['id_dosen', 'nama'])
-            ->findAll();
-
-        return $this->response->setJSON([
-            'status'      => true,
-            'message'     => 'Data dosen berhasil diambil',
-            'jumlah_data' => count($data),
-            'data'        => $data
-        ]);
+        return $this->dosenModel->builder()
+            ->select([
+                'id_dosen',
+                'kode_dosen',
+                'nama'
+            ]);
     }
 
-    // GET: Menampilkan detail dosen berdasarkan ID
-    public function show($id)
-    {
-        $data = $this->dosenModel
-            ->select(['id_dosen', 'nama'])
-            ->find($id);
+    // =====================================
+    // GET: SEMUA DATA DOSEN
+    // =====================================
 
-        if (!$data) {
+    public function index()
+    {
+        try {
+            $data = $this->queryDosen()
+                ->orderBy('id_dosen', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            return $this->response->setJSON([
+                'status'      => true,
+                'message'     => 'Data dosen berhasil diambil',
+                'jumlah_data' => count($data),
+                'data'        => $data
+            ]);
+
+        } catch (\Throwable $e) {
+
+            log_message('error', 'GET semua dosen: ' . $e->getMessage());
+
             return $this->response
-                ->setStatusCode(404)
+                ->setStatusCode(500)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen tidak ditemukan'
+                    'message' => 'Gagal mengambil data dosen'
+                ]);
+        }
+    }
+
+    // =====================================
+    // GET: DETAIL DOSEN BERDASARKAN ID
+    // =====================================
+
+    public function show($id)
+    {
+        if (!ctype_digit((string) $id) || (int) $id < 1) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'ID dosen harus berupa angka positif'
                 ]);
         }
 
-        return $this->response->setJSON([
-            'status'  => true,
-            'message' => 'Detail dosen berhasil diambil',
-            'data'    => $data
-        ]);
+        try {
+            $data = $this->queryDosen()
+                ->where('id_dosen', (int) $id)
+                ->get()
+                ->getRowArray();
+
+            if (!$data) {
+                return $this->response
+                    ->setStatusCode(404)
+                    ->setJSON([
+                        'status'  => false,
+                        'message' => 'Data dosen tidak ditemukan'
+                    ]);
+            }
+
+            return $this->response->setJSON([
+                'status'  => true,
+                'message' => 'Detail dosen berhasil diambil',
+                'data'    => $data
+            ]);
+
+        } catch (\Throwable $e) {
+
+            log_message('error', 'GET detail dosen: ' . $e->getMessage());
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Gagal mengambil detail dosen'
+                ]);
+        }
     }
 
-    // GET: Mencari dosen berdasarkan nama
+    // =====================================
+    // GET: PENCARIAN DOSEN BERDASARKAN NAMA
+    // =====================================
+
     public function search()
     {
-        $nama = $this->request->getGet('nama');
+        $nama = trim((string) $this->request->getGet('nama'));
 
-        if (empty($nama)) {
+        if ($nama === '') {
             return $this->response
                 ->setStatusCode(400)
                 ->setJSON([
@@ -66,223 +127,43 @@ class Dosen extends BaseController
                 ]);
         }
 
-        $data = $this->dosenModel
-            ->select(['id_dosen', 'nama'])
-            ->like('nama', $nama)
-            ->findAll();
-
-        return $this->response->setJSON([
-            'status'      => true,
-            'message'     => 'Pencarian dosen berhasil',
-            'jumlah_data' => count($data),
-            'data'        => $data
-        ]);
-    }
-
-    // POST: Menambahkan data dosen
-    public function create()
-    {
-        $data = $this->request->getJSON(true);
-
-        if (
-            !is_array($data) ||
-            empty($data['id_dosen']) ||
-            empty($data['nip']) ||
-            empty($data['nama'])
-        ) {
-            return $this->response
-                ->setStatusCode(400)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'ID dosen, NIP, dan nama wajib diisi'
-                ]);
-        }
-
-        // Periksa apakah ID sudah digunakan
-        if ($this->dosenModel->find($data['id_dosen'])) {
-            return $this->response
-                ->setStatusCode(409)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'ID dosen sudah digunakan'
-                ]);
-        }
-
         try {
-            // Proses penyimpanan data dosen
-            $hasil = $this->dosenModel->insert($data);
-
-            if ($hasil === false) {
-                $dbError = $this->dosenModel->db->error();
-
-                $lastQuery = (string)
-                    $this->dosenModel->db->getLastQuery();
-
-                log_message(
-                    'error',
-                    'Gagal insert dosen. DB ERROR: ' .
-                    json_encode($dbError)
-                );
-
-                log_message(
-                    'error',
-                    'LAST QUERY: ' . $lastQuery
-                );
-
-                return $this->response
-                    ->setStatusCode(500)
-                    ->setJSON([
-                        'status'     => false,
-                        'message'    => 'Data dosen gagal disimpan',
-                        'errors'     => $this->dosenModel->errors(),
-                        'db_error'   => $dbError,
-                        'last_query' => $lastQuery
-                    ]);
-            }
-
-            // Ambil kembali data yang sudah disimpan
-            $dosenBaru = $this->dosenModel->find(
-                $data['id_dosen']
-            );
-
-            if (!$dosenBaru) {
-                return $this->response
-                    ->setStatusCode(500)
-                    ->setJSON([
-                        'status'  => false,
-                        'message' => 'Insert berhasil dipanggil, tetapi data tidak ditemukan'
-                    ]);
-            }
-
-            return $this->response
-                ->setStatusCode(201)
-                ->setJSON([
-                    'status'  => true,
-                    'message' => 'Data dosen berhasil ditambahkan',
-                    'data'    => $dosenBaru
-                ]);
-
-        } catch (\Throwable $e) {
-
-            log_message(
-                'error',
-                'Gagal menambahkan data dosen: ' .
-                $e->getMessage()
-            );
-
-            return $this->response
-                ->setStatusCode(500)
-                ->setJSON([
-                    'status'      => false,
-                    'message'     => 'Data dosen gagal ditambahkan',
-                    'debug_error' => $e->getMessage()
-                ]);
-        }
-    }
-
-    // PUT: Mengubah data dosen berdasarkan ID
-    public function update($id)
-    {
-        $dosen = $this->dosenModel->find($id);
-
-        if (!$dosen) {
-            return $this->response
-                ->setStatusCode(404)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'Data dosen tidak ditemukan'
-                ]);
-        }
-
-        $data = $this->request->getJSON(true);
-
-        if (!is_array($data) || empty($data)) {
-            return $this->response
-                ->setStatusCode(400)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'Data perubahan tidak boleh kosong'
-                ]);
-        }
-
-        // ID dosen tidak boleh diubah
-        unset($data['id_dosen']);
-
-        try {
-            $this->dosenModel->update($id, $data);
+            $data = $this->queryDosen()
+                ->like('nama', $nama)
+                ->orderBy('nama', 'ASC')
+                ->get()
+                ->getResultArray();
 
             return $this->response->setJSON([
-                'status'  => true,
-                'message' => 'Data dosen berhasil diperbarui',
-                'data'    => $this->dosenModel->find($id)
+                'status'      => true,
+                'message'     => 'Pencarian dosen berhasil',
+                'jumlah_data' => count($data),
+                'data'        => $data
             ]);
 
         } catch (\Throwable $e) {
 
-            log_message(
-                'error',
-                'Gagal memperbarui data dosen: ' .
-                $e->getMessage()
-            );
+            log_message('error', 'Pencarian dosen: ' . $e->getMessage());
 
             return $this->response
                 ->setStatusCode(500)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen gagal diperbarui'
+                    'message' => 'Gagal mencari data dosen'
                 ]);
         }
     }
 
-    // DELETE: Menghapus data dosen berdasarkan ID
-    public function delete($id)
-    {
-        $dosen = $this->dosenModel->find($id);
+    // =====================================
+    // GET: FILTER DOSEN
+    // =====================================
 
-        if (!$dosen) {
-            return $this->response
-                ->setStatusCode(404)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'Data dosen tidak ditemukan'
-                ]);
-        }
-
-        try {
-            $this->dosenModel->delete($id);
-
-            return $this->response->setJSON([
-                'status'  => true,
-                'message' => 'Data dosen berhasil dihapus',
-                'data'    => [
-                    'id_dosen' => $id
-                ]
-            ]);
-
-        } catch (\Throwable $e) {
-
-            log_message(
-                'error',
-                'Gagal menghapus data dosen: ' .
-                $e->getMessage()
-            );
-
-            return $this->response
-                ->setStatusCode(500)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'Data dosen gagal dihapus'
-                ]);
-        }
-    }
-
-    // GET: Memfilter dosen berdasarkan jabatan dan status aktivitas
     public function filter()
     {
-        $status = $this->request->getGet('status');
-        $jabatan = $this->request->getGet('jabatan');
+        $status  = trim((string) $this->request->getGet('status'));
+        $jabatan = trim((string) $this->request->getGet('jabatan'));
 
-        if (empty($status)) {
+        if ($status === '') {
             return $this->response
                 ->setStatusCode(400)
                 ->setJSON([
@@ -291,25 +172,67 @@ class Dosen extends BaseController
                 ]);
         }
 
-        $builder = $this->dosenModel
-            ->select(['id_dosen', 'nama'])
-            ->where('status_aktivitas', $status);
+        try {
+            $builder = $this->queryDosen()
+                ->where('status_aktivitas', $status);
 
-        // Filter jabatan jika parameter dikirim
-        if (!empty($jabatan)) {
-            $builder->where(
-                'jabatan_fungsional',
-                $jabatan
-            );
+            // Jabatan merupakan parameter tambahan.
+            // Kolom jabatan hanya digunakan untuk filter,
+            // tidak dikirimkan dalam respons API.
+
+            if ($jabatan !== '') {
+                $builder->where('jabatan_fungsional', $jabatan);
+            }
+
+            $data = $builder
+                ->orderBy('nama', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            return $this->response->setJSON([
+                'status'      => true,
+                'message'     => 'Filter dosen berhasil',
+                'jumlah_data' => count($data),
+                'data'        => $data
+            ]);
+
+        } catch (\Throwable $e) {
+
+            log_message('error', 'Filter dosen: ' . $e->getMessage());
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Gagal memfilter data dosen'
+                ]);
         }
+    }
 
-        $data = $builder->findAll();
+    // =====================================
+    // GET: PEMERIKSAAN KONEKSI DATABASE
+    // =====================================
 
-        return $this->response->setJSON([
-            'status'      => true,
-            'message'     => 'Filter dosen berhasil',
-            'jumlah_data' => count($data),
-            'data'        => $data
-        ]);
+    public function cekKoneksi()
+    {
+        try {
+            $this->dosenModel->db->query('SELECT 1');
+
+            return $this->response->setJSON([
+                'status'  => true,
+                'message' => 'API dan database berhasil terhubung'
+            ]);
+
+        } catch (\Throwable $e) {
+
+            log_message('error', 'Cek koneksi API: ' . $e->getMessage());
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Koneksi database gagal'
+                ]);
+        }
     }
 }

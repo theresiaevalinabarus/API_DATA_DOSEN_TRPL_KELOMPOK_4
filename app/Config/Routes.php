@@ -3,23 +3,67 @@
 
 use CodeIgniter\Router\RouteCollection;
 
-/** @var RouteCollection $routes */
+/**
+ * @var RouteCollection $routes
+ */
+
+// =====================================
+// HALAMAN UTAMA
+// =====================================
+
 $routes->get('/', 'Home::index');
+$routes->get('dashboard', 'Dashboard::index');
 
-// API DATA DOSEN TRPL KELOMPOK 2
-$routes->group('api', ['namespace' => 'App\Controllers\Api'], function($routes) {
 
+// =====================================
+// API DATA DOSEN TRPL KELOMPOK 4
+// KHUSUS READ / GET
+// =====================================
+
+$routes->group('api', [
+    'namespace' => 'App\Controllers\Api'
+], function ($routes) {
+
+    // CEK KONEKSI DATABASE
+    $routes->get('cek-koneksi', 'Dosen::cekKoneksi');
+
+    // MENAMPILKAN SEMUA DATA DOSEN
     $routes->get('dosen', 'Dosen::index');
 
-    // Pencarian harus sebelum detail
+    // MENCARI DATA DOSEN BERDASARKAN NAMA
     $routes->get('dosen/search', 'Dosen::search');
-    // GET: Filter dosen berdasarkan status aktivitas
+
+    // FILTER DATA DOSEN
     $routes->get('dosen/filter', 'Dosen::filter');
+
+    // MENAMPILKAN DETAIL DOSEN BERDASARKAN ID
     $routes->get('dosen/(:segment)', 'Dosen::show/$1');
-   
-    //Memasang API Key pada POST, PUT, dan DELETE.
-    $routes->post('dosen', 'Dosen::create', ['filter' => 'apiKey']);
-    $routes->put('dosen/(:segment)', 'Dosen::update/$1', ['filter' => 'apiKey']);
-    $routes->delete('dosen/(:segment)', 'Dosen::delete/$1', ['filter' => 'apiKey']);
 
 });
+
+
+// =====================================
+// WEBSITE DATA DOSEN
+// CRUD DIKELOLA OLEH ADMIN
+// =====================================
+
+// READ: Menampilkan daftar dosen
+$routes->get('dosen', 'DosenWeb::index');
+
+// CREATE: Menampilkan form tambah dosen
+$routes->get('dosen/tambah', 'DosenWeb::create');
+
+// CREATE: Menyimpan data dosen
+$routes->post('dosen/simpan', 'DosenWeb::store');
+
+// UPDATE: Menampilkan form edit dosen
+$routes->get('dosen/edit/(:num)', 'DosenWeb::edit/$1');
+
+// UPDATE: Menyimpan perubahan data dosen
+$routes->post('dosen/update/(:num)', 'DosenWeb::update/$1');
+
+// DELETE: Menghapus data dosen
+$routes->post('dosen/hapus/(:num)', 'DosenWeb::delete/$1');
+
+// READ: Menampilkan detail dosen
+$routes->get('dosen/(:num)', 'DosenWeb::detail/$1');

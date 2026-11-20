@@ -27,7 +27,9 @@ class Paths
      *
      * Use /tmp because Hostless has a read-only filesystem.
      */
-    public string $writableDirectory = '/tmp/ci-writable/';
+    public string $writableDirectory = PHP_OS_FAMILY === 'Windows'
+    ? __DIR__ . '/../../writable'
+    : '/tmp/ci-writable/';
 
     /**
      * TESTS DIRECTORY NAME
