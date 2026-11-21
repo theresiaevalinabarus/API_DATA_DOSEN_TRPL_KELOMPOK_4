@@ -1,3 +1,4 @@
+
 <?php
 
 namespace App\Controllers\Api;
@@ -14,19 +15,13 @@ class Dosen extends BaseController
         $this->dosenModel = new DosenModel();
     }
 
-    /**
-     * Query data dosen.
-     * API hanya menampilkan tiga kolom:
-     * id_dosen, kode_dosen, dan nama.
-     */
+    // =====================================
+    // QUERY SEMUA KOLOM DATA DOSEN
+    // =====================================
+
     private function queryDosen()
     {
-        return $this->dosenModel->builder()
-            ->select([
-                'id_dosen',
-                'kode_dosen',
-                'nama'
-            ]);
+        return $this->dosenModel->builder();
     }
 
     // =====================================
@@ -43,7 +38,7 @@ class Dosen extends BaseController
 
             return $this->response->setJSON([
                 'status'      => true,
-                'message'     => 'Data dosen berhasil diambil',
+                'message'     => 'Seluruh data dosen berhasil diambil',
                 'jumlah_data' => count($data),
                 'data'        => $data
             ]);
@@ -62,7 +57,7 @@ class Dosen extends BaseController
     }
 
     // =====================================
-    // GET: DETAIL DOSEN BERDASARKAN ID
+    // GET: DETAIL DOSEN
     // =====================================
 
     public function show($id)
@@ -111,7 +106,7 @@ class Dosen extends BaseController
     }
 
     // =====================================
-    // GET: PENCARIAN DOSEN BERDASARKAN NAMA
+    // GET: PENCARIAN DOSEN
     // =====================================
 
     public function search()
@@ -176,10 +171,6 @@ class Dosen extends BaseController
             $builder = $this->queryDosen()
                 ->where('status_aktivitas', $status);
 
-            // Jabatan merupakan parameter tambahan.
-            // Kolom jabatan hanya digunakan untuk filter,
-            // tidak dikirimkan dalam respons API.
-
             if ($jabatan !== '') {
                 $builder->where('jabatan_fungsional', $jabatan);
             }
@@ -210,7 +201,7 @@ class Dosen extends BaseController
     }
 
     // =====================================
-    // GET: PEMERIKSAAN KONEKSI DATABASE
+    // GET: CEK KONEKSI DATABASE
     // =====================================
 
     public function cekKoneksi()
@@ -235,184 +226,190 @@ class Dosen extends BaseController
                 ]);
         }
     }
+
     // =====================================
-// POST: TAMBAH DATA DOSEN
-// =====================================
+    // POST: TAMBAH DATA DOSEN
+    // WAJIB API KEY
+    // =====================================
 
-public function store()
-{
-    $data = $this->request->getJSON(true);
+    public function store()
+    {
+        $data = $this->request->getJSON(true);
 
-    if (!is_array($data) || empty($data)) {
-        return $this->response
-            ->setStatusCode(400)
-            ->setJSON([
-                'status'  => false,
-                'message' => 'Body JSON wajib diisi'
-            ]);
-    }
-
-    // ID dibuat otomatis oleh database.
-    unset($data['id_dosen']);
-
-    try {
-        $id = $this->dosenModel->insert($data);
-
-        if ($id === false) {
+        if (!is_array($data) || empty($data)) {
             return $this->response
                 ->setStatusCode(400)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen gagal ditambahkan',
-                    'errors'  => $this->dosenModel->errors()
+                    'message' => 'Body JSON wajib diisi'
                 ]);
         }
 
-        return $this->response
-            ->setStatusCode(201)
-            ->setJSON([
+        // ID dibuat otomatis oleh database
+        unset($data['id_dosen']);
+
+        try {
+            $id = $this->dosenModel->insert($data);
+
+            if ($id === false) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'status'  => false,
+                        'message' => 'Data dosen gagal ditambahkan',
+                        'errors'  => $this->dosenModel->errors()
+                    ]);
+            }
+
+            return $this->response
+                ->setStatusCode(201)
+                ->setJSON([
+                    'status'   => true,
+                    'message'  => 'Data dosen berhasil ditambahkan',
+                    'id_dosen' => $id
+                ]);
+
+        } catch (\Throwable $e) {
+
+            log_message('error', 'POST dosen: ' . $e->getMessage());
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Terjadi kesalahan saat menambahkan data'
+                ]);
+        }
+    }
+
+    // =====================================
+    // PUT: UBAH DATA DOSEN
+    // WAJIB API KEY
+    // =====================================
+
+    public function update($id)
+    {
+        if (!ctype_digit((string) $id) || (int) $id < 1) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'ID dosen tidak valid'
+                ]);
+        }
+
+        $data = $this->request->getJSON(true);
+
+        if (!is_array($data) || empty($data)) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Body JSON wajib diisi'
+                ]);
+        }
+
+        // ID tidak boleh diubah melalui body JSON
+        unset($data['id_dosen']);
+
+        try {
+            $dosen = $this->dosenModel->find((int) $id);
+
+            if (!$dosen) {
+                return $this->response
+                    ->setStatusCode(404)
+                    ->setJSON([
+                        'status'  => false,
+                        'message' => 'Data dosen tidak ditemukan'
+                    ]);
+            }
+
+            $berhasil = $this->dosenModel->update((int) $id, $data);
+
+            if (!$berhasil) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'status'  => false,
+                        'message' => 'Data dosen gagal diperbarui',
+                        'errors'  => $this->dosenModel->errors()
+                    ]);
+            }
+
+            return $this->response->setJSON([
                 'status'   => true,
-                'message'  => 'Data dosen berhasil ditambahkan',
-                'id_dosen' => $id
+                'message'  => 'Data dosen berhasil diperbarui',
+                'id_dosen' => (int) $id
             ]);
 
-    } catch (\Throwable $e) {
-        log_message('error', 'POST dosen: ' . $e->getMessage());
+        } catch (\Throwable $e) {
 
-        return $this->response
-            ->setStatusCode(500)
-            ->setJSON([
-                'status'  => false,
-                'message' => 'Terjadi kesalahan saat menambahkan data'
-            ]);
-    }
-}
+            log_message('error', 'PUT dosen: ' . $e->getMessage());
 
-
-// =====================================
-// PUT: UBAH DATA DOSEN
-// =====================================
-
-public function update($id)
-{
-    if (!ctype_digit((string) $id) || (int) $id < 1) {
-        return $this->response
-            ->setStatusCode(400)
-            ->setJSON([
-                'status'  => false,
-                'message' => 'ID dosen tidak valid'
-            ]);
-    }
-
-    $data = $this->request->getJSON(true);
-
-    if (!is_array($data) || empty($data)) {
-        return $this->response
-            ->setStatusCode(400)
-            ->setJSON([
-                'status'  => false,
-                'message' => 'Body JSON wajib diisi'
-            ]);
-    }
-
-    unset($data['id_dosen']);
-
-    try {
-        $dosen = $this->dosenModel->find((int) $id);
-
-        if (!$dosen) {
             return $this->response
-                ->setStatusCode(404)
+                ->setStatusCode(500)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen tidak ditemukan'
+                    'message' => 'Terjadi kesalahan saat memperbarui data'
                 ]);
         }
+    }
 
-        $berhasil = $this->dosenModel->update((int) $id, $data);
+    // =====================================
+    // DELETE: HAPUS DATA DOSEN
+    // WAJIB API KEY
+    // =====================================
 
-        if (!$berhasil) {
+    public function delete($id)
+    {
+        if (!ctype_digit((string) $id) || (int) $id < 1) {
             return $this->response
                 ->setStatusCode(400)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen gagal diperbarui',
-                    'errors'  => $this->dosenModel->errors()
+                    'message' => 'ID dosen tidak valid'
                 ]);
         }
 
-        return $this->response->setJSON([
-            'status'   => true,
-            'message'  => 'Data dosen berhasil diperbarui',
-            'id_dosen' => (int) $id
-        ]);
+        try {
+            $dosen = $this->dosenModel->find((int) $id);
 
-    } catch (\Throwable $e) {
-        log_message('error', 'PUT dosen: ' . $e->getMessage());
+            if (!$dosen) {
+                return $this->response
+                    ->setStatusCode(404)
+                    ->setJSON([
+                        'status'  => false,
+                        'message' => 'Data dosen tidak ditemukan'
+                    ]);
+            }
 
-        return $this->response
-            ->setStatusCode(500)
-            ->setJSON([
-                'status'  => false,
-                'message' => 'Terjadi kesalahan saat memperbarui data'
+            $berhasil = $this->dosenModel->delete((int) $id);
+
+            if (!$berhasil) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'status'  => false,
+                        'message' => 'Data dosen gagal dihapus'
+                    ]);
+            }
+
+            return $this->response->setJSON([
+                'status'   => true,
+                'message'  => 'Data dosen berhasil dihapus',
+                'id_dosen' => (int) $id
             ]);
-    }
-}
 
+        } catch (\Throwable $e) {
 
-// =====================================
-// DELETE: HAPUS DATA DOSEN
-// =====================================
+            log_message('error', 'DELETE dosen: ' . $e->getMessage());
 
-public function delete($id)
-{
-    if (!ctype_digit((string) $id) || (int) $id < 1) {
-        return $this->response
-            ->setStatusCode(400)
-            ->setJSON([
-                'status'  => false,
-                'message' => 'ID dosen tidak valid'
-            ]);
-    }
-
-    try {
-        $dosen = $this->dosenModel->find((int) $id);
-
-        if (!$dosen) {
             return $this->response
-                ->setStatusCode(404)
+                ->setStatusCode(500)
                 ->setJSON([
                     'status'  => false,
-                    'message' => 'Data dosen tidak ditemukan'
+                    'message' => 'Terjadi kesalahan saat menghapus data'
                 ]);
         }
-
-        $berhasil = $this->dosenModel->delete((int) $id);
-
-        if (!$berhasil) {
-            return $this->response
-                ->setStatusCode(400)
-                ->setJSON([
-                    'status'  => false,
-                    'message' => 'Data dosen gagal dihapus'
-                ]);
-        }
-
-        return $this->response->setJSON([
-            'status'   => true,
-            'message'  => 'Data dosen berhasil dihapus',
-            'id_dosen' => (int) $id
-        ]);
-
-    } catch (\Throwable $e) {
-        log_message('error', 'DELETE dosen: ' . $e->getMessage());
-
-        return $this->response
-            ->setStatusCode(500)
-            ->setJSON([
-                'status'  => false,
-                'message' => 'Terjadi kesalahan saat menghapus data'
-            ]);
     }
-}
 }

@@ -18,10 +18,12 @@ class DosenWeb extends BaseController
     }
 
     // ==========================================
-    // MENAMPILKAN DAFTAR DOSEN
+    // MENAMPILKAN DAFTAR DOSEN ADMIN
     // ==========================================
     public function index()
     {
+        $keyword = trim((string) $this->request->getGet('keyword'));
+
         $builder = $this->db->table('dosen d');
 
         $builder->select('
@@ -33,6 +35,79 @@ class DosenWeb extends BaseController
             a.nama_agama
         ');
 
+        $this->joinReferensi($builder);
+
+        if ($keyword !== '') {
+            $builder->groupStart()
+                ->like('d.nama', $keyword)
+                ->orLike('d.nip', $keyword)
+                ->orLike('d.kode_dosen', $keyword)
+                ->groupEnd();
+        }
+
+        $data['dosen'] = $builder
+            ->orderBy('d.id_dosen', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $data['keyword'] = $keyword;
+
+        return view('dosen/index', $data);
+    }
+
+    // ==========================================
+    // DIREKTORI DOSEN UNTUK PENGUNJUNG PUBLIK
+    // ==========================================
+    public function publik()
+    {
+        $keyword = trim((string) $this->request->getGet('keyword'));
+
+        $builder = $this->db->table('dosen d');
+
+        $builder->select('
+            d.id_dosen,
+            d.kode_dosen,
+            d.nip,
+            d.nama,
+            d.jabatan_fungsional,
+            d.status_prodi,
+            d.status_aktivitas,
+            d.pendidikan_terakhir,
+            d.tahun_lulus,
+            d.jenis_kelamin,
+            d.agama,
+            j.nama_jabatan,
+            sp.nama_status AS nama_status_prodi,
+            sa.nama_status AS nama_status_aktivitas,
+            p.nama_pendidikan,
+            a.nama_agama
+        ');
+
+        $this->joinReferensi($builder);
+
+        if ($keyword !== '') {
+            $builder->groupStart()
+                ->like('d.nama', $keyword)
+                ->orLike('d.nip', $keyword)
+                ->orLike('d.kode_dosen', $keyword)
+                ->groupEnd();
+        }
+
+        $data['dosen'] = $builder
+            ->orderBy('d.id_dosen', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $data['keyword'] = $keyword;
+
+        return view('dosen/publik', $data);
+    }
+
+    // ==========================================
+    // JOIN TABEL REFERENSI
+    // ==========================================
+    private function joinReferensi($builder)
+    {
         $builder->join(
             'jabatan_fungsional j',
             'j.id_jabatan = d.id_jabatan',
@@ -63,24 +138,7 @@ class DosenWeb extends BaseController
             'left'
         );
 
-        $keyword = trim((string) $this->request->getGet('keyword'));
-
-        if ($keyword !== '') {
-            $builder->groupStart()
-                ->like('d.nama', $keyword)
-                ->orLike('d.nip', $keyword)
-                ->orLike('d.kode_dosen', $keyword)
-                ->groupEnd();
-        }
-
-        $data['dosen'] = $builder
-            ->orderBy('d.id_dosen', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        $data['keyword'] = $keyword;
-
-        return view('dosen/index', $data);
+        return $builder;
     }
 
     // ==========================================
@@ -130,10 +188,14 @@ class DosenWeb extends BaseController
     }
 
     // ==========================================
-    // MENGAMBIL DATA REFERENSI
+    // MENGAMBIL ID DATA REFERENSI
     // ==========================================
-    private function getReferenceId($table, $idColumn, $nameColumn, $value)
-    {
+    private function getReferenceId(
+        $table,
+        $idColumn,
+        $nameColumn,
+        $value
+    ) {
         $allowed = [
             'jabatan_fungsional' => [
                 'id_jabatan',
@@ -213,14 +275,14 @@ class DosenWeb extends BaseController
             );
         }
 
-        // Validasi panjang NIP
+        // Validasi NIP
         if (!preg_match('/^[0-9]{18}$/', $nip)) {
             throw new \InvalidArgumentException(
                 'NIP harus terdiri dari 18 digit angka.'
             );
         }
 
-        // Validasi pilihan referensi
+        // Mengambil ID referensi
         $idJabatan = $this->getReferenceId(
             'jabatan_fungsional',
             'id_jabatan',
@@ -268,12 +330,18 @@ class DosenWeb extends BaseController
             );
         }
 
-        if (!in_array($jenisKelamin, ['Laki-laki', 'Perempuan'], true)) {
+        // Validasi jenis kelamin
+        if (!in_array(
+            $jenisKelamin,
+            ['Laki-laki', 'Perempuan'],
+            true
+        )) {
             throw new \InvalidArgumentException(
                 'Jenis kelamin tidak valid.'
             );
         }
 
+        // Validasi tahun lulus
         if ($tahunLulus !== null && $tahunLulus !== '') {
             if (
                 !ctype_digit((string) $tahunLulus) ||
@@ -301,7 +369,7 @@ class DosenWeb extends BaseController
             'id_pendidikan' => $idPendidikan,
             'id_agama' => $idAgama,
 
-            // Sinkronisasi kolom lama
+            // Sinkronisasi kolom teks lama
             'jabatan_fungsional' => $jabatan,
             'status_prodi' => $statusProdi,
             'status_aktivitas' => $statusAktivitas,
@@ -356,7 +424,7 @@ class DosenWeb extends BaseController
 
             $this->db->transCommit();
 
-            return redirect()->to(base_url('dosen'))
+            return redirect()->to(site_url('dosen'))
                 ->with('success', 'Data dosen berhasil ditambahkan.');
 
         } catch (Throwable $e) {
@@ -398,7 +466,10 @@ class DosenWeb extends BaseController
             if ($kodeExists > 0) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Kode dosen sudah digunakan oleh dosen lain.');
+                    ->with(
+                        'error',
+                        'Kode dosen sudah digunakan oleh dosen lain.'
+                    );
             }
 
             // Cek NIP milik data lain
@@ -410,7 +481,10 @@ class DosenWeb extends BaseController
             if ($nipExists > 0) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'NIP sudah digunakan oleh dosen lain.');
+                    ->with(
+                        'error',
+                        'NIP sudah digunakan oleh dosen lain.'
+                    );
             }
 
             $this->db->transBegin();
@@ -425,13 +499,16 @@ class DosenWeb extends BaseController
 
             $this->db->transCommit();
 
-            return redirect()->to(base_url('dosen'))
+            return redirect()->to(site_url('dosen'))
                 ->with('success', 'Data dosen berhasil diperbarui.');
 
         } catch (Throwable $e) {
             $this->db->transRollback();
 
-            log_message('error', 'Update dosen ID ' . $id . ': ' . $e->getMessage());
+            log_message(
+                'error',
+                'Update dosen ID ' . $id . ': ' . $e->getMessage()
+            );
 
             return redirect()->back()
                 ->withInput()
@@ -451,19 +528,19 @@ class DosenWeb extends BaseController
             $existing = $this->dosenModel->find($id);
 
             if (!$existing) {
-                return redirect()->to(base_url('dosen'))
+                return redirect()->to(site_url('dosen'))
                     ->with('error', 'Data dosen tidak ditemukan.');
             }
 
             $this->dosenModel->delete($id);
 
-            return redirect()->to(base_url('dosen'))
+            return redirect()->to(site_url('dosen'))
                 ->with('success', 'Data dosen berhasil dihapus.');
 
         } catch (Throwable $e) {
             log_message('error', 'Delete dosen: ' . $e->getMessage());
 
-            return redirect()->to(base_url('dosen'))
+            return redirect()->to(site_url('dosen'))
                 ->with('error', 'Data dosen gagal dihapus.');
         }
     }
