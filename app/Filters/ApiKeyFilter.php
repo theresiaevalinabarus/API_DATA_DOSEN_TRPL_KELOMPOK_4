@@ -10,13 +10,13 @@ class ApiKeyFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        // Mengambil API Key dari file .env
+        // API Key khusus Kelompok 4 dari .env
         $apiKey = trim((string) env('API_ADMIN_KEY', ''));
 
-        // Mengambil API Key dari HTTP Header
+        // API Key dari header
         $requestKey = trim($request->getHeaderLine('X-API-KEY'));
 
-        // Memeriksa kecocokan API Key
+        // Validasi API Key Kelompok 4
         if (
             $apiKey === '' ||
             $requestKey === '' ||
@@ -30,7 +30,6 @@ class ApiKeyFilter implements FilterInterface
                 ]);
         }
 
-        // API Key valid, request dilanjutkan.
         return null;
     }
 

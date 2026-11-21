@@ -15,12 +15,41 @@ class Dosen extends BaseController
     }
 
     // =====================================
-    // QUERY SEMUA KOLOM DATA DOSEN
+    // CEK API KEY KELOMPOK 4
+    // =====================================
+
+    private function isKelompok4(): bool
+    {
+        $apiKey = trim((string) env('API_ADMIN_KEY', ''));
+
+        $requestKey = trim(
+            $this->request->getHeaderLine('X-API-KEY')
+        );
+
+        return $apiKey !== ''
+            && $requestKey !== ''
+            && hash_equals($apiKey, $requestKey);
+    }
+
+    // =====================================
+    // QUERY DATA DOSEN BERDASARKAN AKSES
     // =====================================
 
     private function queryDosen()
     {
-        return $this->dosenModel->builder();
+        $builder = $this->dosenModel->builder();
+
+        if ($this->isKelompok4()) {
+            // Kelompok 4: seluruh kolom
+            return $builder;
+        }
+
+        // Kelompok lain: hanya tiga kolom
+        return $builder->select([
+            'id_dosen',
+            'kode_dosen',
+            'nama'
+        ]);
     }
 
     // =====================================
@@ -37,13 +66,15 @@ class Dosen extends BaseController
 
             return $this->response->setJSON([
                 'status'      => true,
-                'message'     => 'Seluruh data dosen berhasil diambil',
+                'message'     => 'Data dosen berhasil diambil',
+                'akses'       => $this->isKelompok4()
+                    ? 'Kelompok 4 - Akses Lengkap'
+                    : 'Publik - Akses Terbatas',
                 'jumlah_data' => count($data),
                 'data'        => $data
             ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'GET semua dosen: ' . $e->getMessage());
 
             return $this->response
@@ -92,7 +123,6 @@ class Dosen extends BaseController
             ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'GET detail dosen: ' . $e->getMessage());
 
             return $this->response
@@ -136,7 +166,6 @@ class Dosen extends BaseController
             ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'Pencarian dosen: ' . $e->getMessage());
 
             return $this->response
@@ -187,7 +216,6 @@ class Dosen extends BaseController
             ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'Filter dosen: ' . $e->getMessage());
 
             return $this->response
@@ -214,7 +242,6 @@ class Dosen extends BaseController
             ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'Cek koneksi API: ' . $e->getMessage());
 
             return $this->response
@@ -228,7 +255,7 @@ class Dosen extends BaseController
 
     // =====================================
     // POST: TAMBAH DATA DOSEN
-    // WAJIB API KEY
+    // WAJIB API KEY KELOMPOK 4
     // =====================================
 
     public function store()
@@ -269,7 +296,6 @@ class Dosen extends BaseController
                 ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'POST dosen: ' . $e->getMessage());
 
             return $this->response
@@ -283,7 +309,7 @@ class Dosen extends BaseController
 
     // =====================================
     // PUT: UBAH DATA DOSEN
-    // WAJIB API KEY
+    // WAJIB API KEY KELOMPOK 4
     // =====================================
 
     public function update($id)
@@ -342,7 +368,6 @@ class Dosen extends BaseController
             ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'PUT dosen: ' . $e->getMessage());
 
             return $this->response
@@ -356,7 +381,7 @@ class Dosen extends BaseController
 
     // =====================================
     // DELETE: HAPUS DATA DOSEN
-    // WAJIB API KEY
+    // WAJIB API KEY KELOMPOK 4
     // =====================================
 
     public function delete($id)
@@ -400,7 +425,6 @@ class Dosen extends BaseController
             ]);
 
         } catch (\Throwable $e) {
-
             log_message('error', 'DELETE dosen: ' . $e->getMessage());
 
             return $this->response
