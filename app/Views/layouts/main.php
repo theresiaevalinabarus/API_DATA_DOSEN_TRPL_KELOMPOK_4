@@ -127,6 +127,7 @@
             background: var(--primary);
             color: white;
             font-weight: 700;
+            box-shadow: 0 5px 15px rgba(40,100,232,.2);
         }
 
         .menu-icon {
@@ -353,6 +354,7 @@
 
         <nav class="sidebar-menu">
 
+            <!-- DASHBOARD -->
             <a
                 href="<?= site_url('dashboard') ?>"
                 class="<?= ($active ?? '') === 'dashboard' ? 'active' : '' ?>">
@@ -362,12 +364,23 @@
 
             </a>
 
+            <!-- DATA DOSEN -->
             <a
                 href="<?= site_url('dosen') ?>"
                 class="<?= ($active ?? '') === 'dosen' ? 'active' : '' ?>">
 
                 <span class="menu-icon">👨‍🏫</span>
                 Data Dosen
+
+            </a>
+
+            <!-- INTEGRASI API -->
+            <a
+                href="<?= site_url('api-explorer') ?>"
+                class="<?= ($active ?? '') === 'api-explorer' ? 'active' : '' ?>">
+
+                <span class="menu-icon">🔌</span>
+                Integrasi API
 
             </a>
 
@@ -381,8 +394,11 @@
 
     </aside>
 
-    <div class="sidebar-overlay" id="sidebarOverlay"
-         onclick="toggleSidebar()"></div>
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        onclick="toggleSidebar()">
+    </div>
 
     <!-- MAIN WRAPPER -->
     <div class="main-wrapper">
@@ -402,11 +418,13 @@
                 </button>
 
                 <div class="page-info">
+
                     <h1><?= esc($heading ?? 'Dashboard') ?></h1>
 
                     <p>
                         <?= esc($subtitle ?? 'Sistem Informasi Data Dosen TRPL') ?>
                     </p>
+
                 </div>
 
             </div>
@@ -445,8 +463,13 @@
 
     <script>
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('show');
-            document.getElementById('sidebarOverlay').classList.toggle('show');
+
+            document.getElementById('sidebar')
+                .classList.toggle('show');
+
+            document.getElementById('sidebarOverlay')
+                .classList.toggle('show');
+
         }
     </script>
 
