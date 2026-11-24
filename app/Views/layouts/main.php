@@ -352,39 +352,65 @@
             MENU UTAMA
         </div>
 
-        <nav class="sidebar-menu">
+        
+<nav class="sidebar-menu">
 
-            <!-- DASHBOARD -->
-            <a
-                href="<?= site_url('dashboard') ?>"
-                class="<?= ($active ?? '') === 'dashboard' ? 'active' : '' ?>">
+    <!-- DASHBOARD -->
+    <a
+        href="<?= site_url('dashboard') ?>"
+        class="<?= ($active ?? '') === 'dashboard' ? 'active' : '' ?>">
 
-                <span class="menu-icon">📊</span>
-                Dashboard
+        <span class="menu-icon">🏠</span>
+        Dashboard
+    </a>
 
-            </a>
+    <!-- DATA DOSEN KELOMPOK 4 -->
+    <a
+        href="<?= site_url('dosen') ?>"
+        class="<?= ($active ?? '') === 'dosen' ? 'active' : '' ?>">
 
-            <!-- DATA DOSEN -->
-            <a
-                href="<?= site_url('dosen') ?>"
-                class="<?= ($active ?? '') === 'dosen' ? 'active' : '' ?>">
+        <span class="menu-icon">👨‍🏫</span>
+        Data Dosen
+    </a>
 
-                <span class="menu-icon">👨‍🏫</span>
-                Data Dosen
+    <!-- MATA KULIAH KELOMPOK 3 -->
+    <a
+        href="<?= site_url('api-explorer') ?>?group=3"
+        class="<?= ($active ?? '') === 'matkul' ? 'active' : '' ?>">
 
-            </a>
+        <span class="menu-icon">📚</span>
+        <span>
+            Mata Kuliah
+            <small style="display:block; font-size:10px; opacity:.75;">
+                Kelompok 3
+            </small>
+        </span>
+    </a>
 
-            <!-- INTEGRASI API -->
-            <a
-                href="<?= site_url('api-explorer') ?>"
-                class="<?= ($active ?? '') === 'api-explorer' ? 'active' : '' ?>">
+    <!-- JADWAL KULIAH KELOMPOK 2 -->
+    <a
+        href="<?= site_url('api-explorer') ?>?group=2"
+        class="<?= ($active ?? '') === 'jadwal' ? 'active' : '' ?>">
 
-                <span class="menu-icon">🔌</span>
-                Integrasi API
+        <span class="menu-icon">📅</span>
+        <span>
+            Jadwal Kuliah
+            <small style="display:block; font-size:10px; opacity:.75;">
+                Kelompok 2
+            </small>
+        </span>
+    </a>
 
-            </a>
+    <!-- INTEGRASI API -->
+    <a
+        href="<?= site_url('api-explorer') ?>"
+        class="<?= ($active ?? '') === 'api-explorer' ? 'active' : '' ?>">
 
-        </nav>
+        <span class="menu-icon">🔌</span>
+        Integrasi API
+    </a>
+
+</nav>
 
         <div class="sidebar-footer">
             <strong>Kelompok 4</strong><br>

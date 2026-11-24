@@ -37,6 +37,7 @@ $routes->get('dashboard', 'Dashboard::index', [
 
 // =====================================
 // API EXPLORER
+// Controller: app/Controllers/Api/ApiExplorer.php
 // =====================================
 
 $routes->get('api-explorer', 'Api\ApiExplorer::index', [
