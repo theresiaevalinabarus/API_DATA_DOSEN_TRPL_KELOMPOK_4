@@ -24,4 +24,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "php spark serve --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "mkdir -p /tmp/ci-writable/cache /tmp/ci-writable/logs /tmp/ci-writable/session /tmp/ci-writable/uploads && php spark serve --host 0.0.0.0 --port ${PORT:-8080}"]
