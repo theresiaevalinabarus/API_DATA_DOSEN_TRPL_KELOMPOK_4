@@ -15,7 +15,7 @@ class Dosen extends BaseController
     }
 
     // =====================================
-    // CEK API KEY KELOMPOK 4
+    // VALIDASI API KEY
     // =====================================
 
     private function isKelompok4(): bool
@@ -31,6 +31,32 @@ class Dosen extends BaseController
             && hash_equals($apiKey, $requestKey);
     }
 
+    /**
+     * API Key kosong = akses publik.
+     * API Key salah = akses ditolak.
+     */
+    private function validateOptionalApiKey()
+    {
+        $requestKey = trim(
+            $this->request->getHeaderLine('X-API-KEY')
+        );
+
+        if ($requestKey === '') {
+            return null;
+        }
+
+        if (!$this->isKelompok4()) {
+            return $this->response
+                ->setStatusCode(401)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Akses ditolak. API Key tidak valid.'
+                ]);
+        }
+
+        return null;
+    }
+
     // =====================================
     // QUERY DATA DOSEN BERDASARKAN AKSES
     // =====================================
@@ -40,11 +66,9 @@ class Dosen extends BaseController
         $builder = $this->dosenModel->builder();
 
         if ($this->isKelompok4()) {
-            // Kelompok 4: seluruh kolom
             return $builder;
         }
 
-        // Kelompok lain: hanya tiga kolom
         return $builder->select([
             'id_dosen',
             'kode_dosen',
@@ -58,6 +82,12 @@ class Dosen extends BaseController
 
     public function index()
     {
+        $validation = $this->validateOptionalApiKey();
+
+        if ($validation !== null) {
+            return $validation;
+        }
+
         try {
             $data = $this->queryDosen()
                 ->orderBy('id_dosen', 'ASC')
@@ -92,6 +122,12 @@ class Dosen extends BaseController
 
     public function show($id)
     {
+        $validation = $this->validateOptionalApiKey();
+
+        if ($validation !== null) {
+            return $validation;
+        }
+
         if (!ctype_digit((string) $id) || (int) $id < 1) {
             return $this->response
                 ->setStatusCode(400)
@@ -140,6 +176,12 @@ class Dosen extends BaseController
 
     public function search()
     {
+        $validation = $this->validateOptionalApiKey();
+
+        if ($validation !== null) {
+            return $validation;
+        }
+
         $nama = trim((string) $this->request->getGet('nama'));
 
         if ($nama === '') {
@@ -183,6 +225,12 @@ class Dosen extends BaseController
 
     public function filter()
     {
+        $validation = $this->validateOptionalApiKey();
+
+        if ($validation !== null) {
+            return $validation;
+        }
+
         $status  = trim((string) $this->request->getGet('status'));
         $jabatan = trim((string) $this->request->getGet('jabatan'));
 
@@ -234,11 +282,16 @@ class Dosen extends BaseController
     public function cekKoneksi()
     {
         try {
-            $this->dosenModel->db->query('SELECT 1');
+            $db = \Config\Database::connect();
+            $db->initialize();
+
+            $result = $db->query('SELECT 1 AS koneksi')
+                ->getRowArray();
 
             return $this->response->setJSON([
                 'status'  => true,
-                'message' => 'API dan database berhasil terhubung'
+                'message' => 'API dan database berhasil terhubung',
+                'hasil'   => $result
             ]);
 
         } catch (\Throwable $e) {
@@ -255,7 +308,6 @@ class Dosen extends BaseController
 
     // =====================================
     // POST: TAMBAH DATA DOSEN
-    // WAJIB API KEY KELOMPOK 4
     // =====================================
 
     public function store()
@@ -271,7 +323,6 @@ class Dosen extends BaseController
                 ]);
         }
 
-        // ID dibuat otomatis oleh database
         unset($data['id_dosen']);
 
         try {
@@ -309,7 +360,6 @@ class Dosen extends BaseController
 
     // =====================================
     // PUT: UBAH DATA DOSEN
-    // WAJIB API KEY KELOMPOK 4
     // =====================================
 
     public function update($id)
@@ -334,7 +384,6 @@ class Dosen extends BaseController
                 ]);
         }
 
-        // ID tidak boleh diubah melalui body JSON
         unset($data['id_dosen']);
 
         try {
@@ -381,7 +430,6 @@ class Dosen extends BaseController
 
     // =====================================
     // DELETE: HAPUS DATA DOSEN
-    // WAJIB API KEY KELOMPOK 4
     // =====================================
 
     public function delete($id)

@@ -82,62 +82,40 @@ class ApiExplorer extends Controller
             $headers['Content-Type'] = 'application/json';
         }
 
-        // API Key Kelompok 4
-        if (
-            $host === 'api-data-dosen-trpl-kelompok-4.hostless.app' &&
-            in_array($method, ['POST', 'PUT', 'DELETE'], true)
-        ) {
-            $apiKey = getenv('API_EXPLORER_GROUP4_KEY');
+      // =====================================
+// API KEY KELOMPOK 4
+// =====================================
 
-            if ($apiKey) {
-                $headers['X-API-KEY'] = $apiKey;
-            }
-        }
+if ($host === 'api-data-dosen-trpl-kelompok-4.hostless.app') {
 
-        $options = [
-            'headers'         => $headers,
-            'http_errors'     => false,
-            'timeout'         => 25,
-            'connect_timeout' => 10,
-            'allow_redirects' => false,
-            'verify'          => true
-        ];
+    $apiKey = trim(
+        (string) $this->request->getPost('api_key')
+    );
 
-        if (in_array($method, ['POST', 'PUT'], true) && $body !== '') {
-            $options['body'] = $body;
-        }
+    // GET boleh tanpa API Key.
+    // POST, PUT, PATCH, DELETE wajib menggunakan API Key.
+    $protectedMethods = [
+        'POST',
+        'PUT',
+        'PATCH',
+        'DELETE'
+    ];
 
-        $start = microtime(true);
+    if (
+        in_array($method, $protectedMethods, true) &&
+        $apiKey === ''
+    ) {
+        return $this->jsonError(
+            'API Key wajib diisi untuk metode ' . $method . '.',
+            401
+        );
+    }
 
-        try {
-            $client = \Config\Services::curlrequest();
-
-            $response = $client->request($method, $url, $options);
-
-            $duration = round((microtime(true) - $start) * 1000);
-            $responseBody = (string) $response->getBody();
-
-            return $this->response->setJSON([
-                'success'  => true,
-                'status'   => $response->getStatusCode(),
-                'reason'   => $response->getReasonPhrase(),
-                'duration' => $duration,
-                'size'     => strlen($responseBody),
-                'body'     => $responseBody
-            ]);
-
-        } catch (Throwable $e) {
-            log_message('error', 'API Explorer: ' . $e->getMessage());
-
-            return $this->response->setJSON([
-                'success'  => false,
-                'status'   => 0,
-                'reason'   => 'Connection Error',
-                'duration' => round((microtime(true) - $start) * 1000),
-                'size'     => 0,
-                'body'     => $e->getMessage()
-            ]);
-        }
+    // API Key hanya dikirim jika kolom diisi.
+    if ($apiKey !== '') {
+        $headers['X-API-KEY'] = $apiKey;
+    }
+}
     }
 
     private function jsonError(string $message)

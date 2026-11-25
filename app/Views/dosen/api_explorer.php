@@ -236,6 +236,24 @@
         font-weight: 600;
     }
 
+    .api-key-box {
+        margin-top: 18px;
+        padding: 16px;
+        border: 1px solid #e0e9f8;
+        border-radius: 12px;
+        background: #f8faff;
+    }
+
+    .api-key-box label {
+        font-weight: 800;
+        color: #17365e;
+    }
+
+    .api-key-box input {
+        min-height: 45px;
+        border-radius: 9px;
+    }
+
     @media(max-width: 700px) {
         .request-row {
             grid-template-columns: 1fr;
@@ -254,8 +272,8 @@
 <div class="api-page">
 
     <div class="api-intro">
-      <h2>🔌 <?= esc($heading ?? 'API Explorer') ?></h2>
-<p><?= esc($pageDescription ?? 'Uji dan panggil endpoint API.') ?></p>
+        <h2>🔌 <?= esc($heading ?? 'API Explorer') ?></h2>
+        <p><?= esc($pageDescription ?? 'Uji dan panggil endpoint API.') ?></p>
     </div>
 
     <!-- REQUEST CARD -->
@@ -272,6 +290,7 @@
 
             <?= csrf_field() ?>
 
+            <!-- METHOD DAN URL -->
             <div class="request-row">
 
                 <select
@@ -280,12 +299,12 @@
                     class="form-select method-select">
 
                     <option value="GET">GET</option>
-<option value="POST">POST</option>
-<option value="PUT">PUT</option>
-<option value="PATCH">PATCH</option>
-<option value="DELETE">DELETE</option>
-<option value="HEAD">HEAD</option>
-<option value="OPTIONS">OPTIONS</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="HEAD">HEAD</option>
+                    <option value="OPTIONS">OPTIONS</option>
 
                 </select>
 
@@ -295,7 +314,7 @@
                     id="endpointUrl"
                     class="form-control"
                     placeholder="Masukkan URL endpoint API..."
-                    value="<?= esc($group4Url) ?>"
+                    value="<?= esc($defaultUrl ?? $group4Url) ?>"
                     required>
 
                 <button
@@ -309,6 +328,30 @@
 
             </div>
 
+            <!-- API KEY -->
+            <div class="api-key-box">
+
+                <label for="api_key" class="form-label">
+                    🔐 API Key Kelompok 4
+                </label>
+
+                <input
+                    type="password"
+                    name="api_key"
+                    id="api_key"
+                    class="form-control"
+                    placeholder="Masukkan API Key..."
+                    autocomplete="off">
+
+                <small class="text-muted d-block mt-2">
+                    Kosongkan untuk akses publik terbatas.
+                    API Key yang benar diperlukan untuk akses lengkap,
+                    POST, PUT, dan DELETE.
+                </small>
+
+            </div>
+
+            <!-- REQUEST BODY -->
             <div class="request-body" id="requestBody">
 
                 <label class="form-label fw-bold mt-3">
@@ -333,6 +376,7 @@
 
         </form>
 
+        <!-- ENDPOINT CEPAT -->
         <div class="quick-label">
             ENDPOINT CEPAT
         </div>
@@ -397,6 +441,7 @@
 
         </div>
 
+        <!-- TAB RESPONSE -->
         <div class="response-tabs">
 
             <button
@@ -473,18 +518,29 @@ document.addEventListener('DOMContentLoaded', function () {
     let parsedResponse = null;
     let currentTab = 'json';
 
+    // =====================================
+    // TAMPILKAN REQUEST BODY
+    // =====================================
+
     function updateBodyVisibility() {
+
         const selected = method.value;
+
         requestBody.classList.toggle(
             'show',
-            selected === 'POST' || selected === 'PUT'
+            selected === 'POST' ||
+            selected === 'PUT' ||
+            selected === 'PATCH'
         );
     }
 
     method.addEventListener('change', updateBodyVisibility);
     updateBodyVisibility();
 
-    // Tombol endpoint cepat
+    // =====================================
+    // ENDPOINT CEPAT
+    // =====================================
+
     document.querySelectorAll('.quick-btn').forEach(function (button) {
 
         button.addEventListener('click', function () {
@@ -499,10 +555,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
-    // Render JSON dengan aman
+    // =====================================
+    // RENDER JSON
+    // =====================================
+
     function renderJson(data) {
 
         const pre = document.createElement('pre');
+
         pre.className = 'response-code';
 
         pre.textContent = typeof data === 'string'
@@ -510,29 +570,36 @@ document.addEventListener('DOMContentLoaded', function () {
             : JSON.stringify(data, null, 4);
 
         responseContent.replaceChildren(pre);
-
     }
 
-    // Render RAW
+    // =====================================
+    // RENDER RAW
+    // =====================================
+
     function renderRaw(data) {
 
         const pre = document.createElement('pre');
+
         pre.className = 'response-code';
         pre.textContent = currentResponse;
 
         responseContent.replaceChildren(pre);
-
     }
 
-    // Render TABEL
+    // =====================================
+    // RENDER TABEL
+    // =====================================
+
     function renderTable(data) {
 
         let rows = [];
 
         if (Array.isArray(data)) {
             rows = data;
+
         } else if (data && Array.isArray(data.data)) {
             rows = data.data;
+
         } else if (data && typeof data === 'object') {
             rows = [data];
         }
@@ -543,7 +610,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Data tidak tersedia dalam format tabel.';
 
             return;
-
         }
 
         const columns = [
@@ -562,9 +628,10 @@ document.addEventListener('DOMContentLoaded', function () {
         columns.forEach(function (column) {
 
             const th = document.createElement('th');
-            th.textContent = column;
-            headerRow.appendChild(th);
 
+            th.textContent = column;
+
+            headerRow.appendChild(th);
         });
 
         thead.appendChild(headerRow);
@@ -587,33 +654,41 @@ document.addEventListener('DOMContentLoaded', function () {
                         : String(value ?? '');
 
                 tr.appendChild(td);
-
             });
 
             tbody.appendChild(tr);
-
         });
 
         table.appendChild(tbody);
         wrapper.appendChild(table);
 
         responseContent.replaceChildren(wrapper);
-
     }
+
+    // =====================================
+    // RENDER TAB
+    // =====================================
 
     function renderCurrentTab() {
 
         if (currentTab === 'raw') {
+
             renderRaw(parsedResponse);
+
         } else if (currentTab === 'table') {
+
             renderTable(parsedResponse);
+
         } else {
+
             renderJson(parsedResponse);
         }
-
     }
 
-    // Pilihan tab response
+    // =====================================
+    // PILIHAN TAB RESPONSE
+    // =====================================
+
     document.querySelectorAll('.response-tab').forEach(function (tab) {
 
         tab.addEventListener('click', function () {
@@ -634,7 +709,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
-    // Mengirim request
+    // =====================================
+    // KIRIM REQUEST
+    // =====================================
+
     form.addEventListener('submit', async function (event) {
 
         event.preventDefault();
@@ -657,6 +735,8 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         `;
 
+        copyButton.disabled = true;
+
         try {
 
             const formData = new FormData(form);
@@ -676,9 +756,13 @@ document.addEventListener('DOMContentLoaded', function () {
             parsedResponse = currentResponse;
 
             try {
+
                 parsedResponse = JSON.parse(currentResponse);
+
             } catch (error) {
+
                 // Respons bukan JSON, tetap tampilkan sebagai teks.
+
             }
 
             const status = Number(result.status || 0);
@@ -700,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             renderCurrentTab();
 
-            copyButton.disabled = false;
+            copyButton.disabled = currentResponse === '';
 
         } catch (error) {
 
@@ -721,7 +805,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
-    // Salin response
+    // =====================================
+    // SALIN RESPONSE
+    // =====================================
+
     copyButton.addEventListener('click', async function () {
 
         if (!currentResponse) return;
@@ -733,7 +820,9 @@ document.addEventListener('DOMContentLoaded', function () {
             copyButton.textContent = '✓ Tersalin';
 
             setTimeout(() => {
+
                 copyButton.textContent = '📋 Salin Response';
+
             }, 1500);
 
         } catch (error) {

@@ -10,13 +10,9 @@ class ApiKeyFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        // API Key khusus Kelompok 4 dari .env
         $apiKey = trim((string) env('API_ADMIN_KEY', ''));
-
-        // API Key dari header
         $requestKey = trim($request->getHeaderLine('X-API-KEY'));
 
-        // Validasi API Key Kelompok 4
         if (
             $apiKey === '' ||
             $requestKey === '' ||

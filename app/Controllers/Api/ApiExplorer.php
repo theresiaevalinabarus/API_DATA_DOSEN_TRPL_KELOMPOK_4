@@ -10,66 +10,66 @@ class ApiExplorer extends Controller
     /**
      * Menampilkan halaman API Explorer.
      */
-   
-public function index()
-{
-    // Membaca pilihan menu dari URL: group=2, group=3, atau tanpa group.
-    $group = (string) $this->request->getGet('group');
+    public function index()
+    {
+        $group = (string) $this->request->getGet('group');
 
-    $group2BaseUrl = trim((string) getenv('API_GROUP2_BASE_URL'));
-    $group3BaseUrl = trim((string) getenv('API_GROUP3_BASE_URL'));
+        $group2BaseUrl = trim((string) getenv('API_GROUP2_BASE_URL'));
+        $group3BaseUrl = trim((string) getenv('API_GROUP3_BASE_URL'));
 
-    $group2Url = $group2BaseUrl !== ''
-        ? rtrim($group2BaseUrl, '/') 
-        : '';
+        $group2Url = $group2BaseUrl !== ''
+            ? rtrim($group2BaseUrl, '/')
+            : '';
 
-    $group3Url = $group3BaseUrl !== ''
-        ? rtrim($group3BaseUrl, '/') . '/matkul'
-        : '';
+        $group3Url = $group3BaseUrl !== ''
+            ? rtrim($group3BaseUrl, '/') . '/matkul'
+            : '';
 
-    $group4Url = 'https://api-data-dosen-trpl-kelompok-4.hostless.app/api/dosen';
+        $group4Url = 'https://api-data-dosen-trpl-kelompok-4.hostless.app/index.php/api/dosen';
 
-    // Menentukan halaman berdasarkan menu yang diklik.
-    if ($group === '2') {
-        $heading = 'Jadwal Kuliah';
-        $subtitle = 'API Kelompok 2 - Jadwal Perkuliahan';
-        $active = 'jadwal';
-        $defaultUrl = $group2Url;
-        $pageDescription = 'Halaman pengujian API Jadwal Kuliah Kelompok 2.';
-        $apiAvailable = $group2Url !== '';
+        if ($group === '2') {
+            $heading = 'Jadwal Kuliah';
+            $subtitle = 'API Kelompok 2 - Jadwal Perkuliahan';
+            $active = 'jadwal';
+            $defaultUrl = $group2Url;
+            $pageDescription = 'Halaman pengujian API Jadwal Kuliah Kelompok 2.';
+            $apiAvailable = $group2Url !== '';
 
-    } elseif ($group === '3') {
-        $heading = 'Mata Kuliah';
-        $subtitle = 'API Kelompok 3 - Data Mata Kuliah';
-        $active = 'matkul';
-        $defaultUrl = $group3Url;
-        $pageDescription = 'Halaman pengujian API Mata Kuliah Kelompok 3.';
-        $apiAvailable = $group3Url !== '';
+        } elseif ($group === '3') {
+            $heading = 'Mata Kuliah';
+            $subtitle = 'API Kelompok 3 - Data Mata Kuliah';
+            $active = 'matkul';
+            $defaultUrl = $group3Url;
+            $pageDescription = 'Halaman pengujian API Mata Kuliah Kelompok 3.';
+            $apiAvailable = $group3Url !== '';
 
-    } else {
-        $heading = 'Integrasi API';
-        $subtitle = 'API Explorer - Kelompok 4, 3, dan 2';
-        $active = 'api-explorer';
-        $defaultUrl = $group4Url;
-        $pageDescription = 'Uji dan panggil endpoint API dari setiap kelompok.';
-        $apiAvailable = true;
+        } else {
+            $heading = 'Integrasi API';
+            $subtitle = 'API Explorer - Kelompok 4, 3, dan 2';
+            $active = 'api-explorer';
+            $defaultUrl = $group4Url;
+            $pageDescription = 'Uji dan panggil endpoint API dari setiap kelompok.';
+            $apiAvailable = true;
+        }
+
+        return view('dosen/api_explorer', [
+            'title'           => $heading . ' | Data Dosen TRPL',
+            'heading'         => $heading,
+            'subtitle'        => $subtitle,
+            'active'          => $active,
+            'group'           => $group,
+            'group2Url'       => $group2Url,
+            'group3Url'       => $group3Url,
+            'group4Url'       => $group4Url,
+            'defaultUrl'      => $defaultUrl,
+            'pageDescription' => $pageDescription,
+            'apiAvailable'    => $apiAvailable
+        ]);
     }
 
-    return view('dosen/api_explorer', [
-        'title'          => $heading . ' | Data Dosen TRPL',
-        'heading'        => $heading,
-        'subtitle'       => $subtitle,
-        'active'         => $active,
-        'group'          => $group,
-        'group2Url'      => $group2Url,
-        'group3Url'      => $group3Url,
-        'group4Url'      => $group4Url,
-        'defaultUrl'     => $defaultUrl,
-        'pageDescription'=> $pageDescription,
-        'apiAvailable'   => $apiAvailable
-    ]);
-}
-
+    /**
+     * Mengirim request ke endpoint API.
+     */
     public function send()
     {
         $method = strtoupper(
@@ -81,6 +81,10 @@ public function index()
         );
 
         $body = (string) $this->request->getPost('body');
+
+        $submittedKey = trim(
+            (string) $this->request->getPost('api_key')
+        );
 
         // =====================================
         // VALIDASI METHOD
@@ -131,7 +135,7 @@ public function index()
         }
 
         // =====================================
-        // VALIDASI HOST API
+        // VALIDASI HOST
         // =====================================
 
         $configuredHosts = getenv('API_EXPLORER_ALLOWED_HOSTS')
@@ -151,6 +155,49 @@ public function index()
                 'Host API belum diizinkan dalam konfigurasi.',
                 403
             );
+        }
+
+        $isGroup4 = (
+            $host === 'api-data-dosen-trpl-kelompok-4.hostless.app'
+        );
+
+        // =====================================
+        // VALIDASI API KEY KELOMPOK 4
+        // =====================================
+
+        $protectedMethods = [
+            'POST',
+            'PUT',
+            'PATCH',
+            'DELETE'
+        ];
+
+        if ($isGroup4) {
+            $configuredKey = trim(
+                (string) env('API_ADMIN_KEY', '')
+            );
+
+            if (
+                in_array($method, $protectedMethods, true) &&
+                $submittedKey === ''
+            ) {
+                return $this->jsonError(
+                    'API Key wajib diisi untuk metode ' . $method . '.',
+                    401
+                );
+            }
+
+            if ($submittedKey !== '') {
+                if (
+                    $configuredKey === '' ||
+                    !hash_equals($configuredKey, $submittedKey)
+                ) {
+                    return $this->jsonError(
+                        'API Key tidak valid. Akses ditolak.',
+                        401
+                    );
+                }
+            }
         }
 
         // =====================================
@@ -189,26 +236,12 @@ public function index()
             $headers['Content-Type'] = 'application/json';
         }
 
-        // =====================================
-        // API KEY KELOMPOK 4
-        // =====================================
-
+        // API Key hanya diteruskan jika benar.
         if (
-            $host === 'api-data-dosen-trpl-kelompok-4.hostless.app'
+            $isGroup4 &&
+            $submittedKey !== ''
         ) {
-           $apiKey = trim(
-    (string) getenv('API_ADMIN_KEY')
-);
-
-            if ($apiKey === '') {
-                return $this->jsonError(
-                    'API Key Kelompok 4 belum dikonfigurasi di file .env.',
-                    500
-                );
-            }
-
-            // API Key dikirim untuk seluruh HTTP Method.
-            $headers['X-API-KEY'] = $apiKey;
+            $headers['X-API-KEY'] = $configuredKey;
         }
 
         // =====================================
@@ -254,23 +287,16 @@ public function index()
 
             $statusCode = $response->getStatusCode();
 
-            $reason = $response->getReasonPhrase();
-
-            // =================================
-            // RESPONSE API
-            // =================================
-
             return $this->response->setJSON([
                 'success'  => $statusCode >= 200 && $statusCode < 300,
                 'status'   => $statusCode,
-                'reason'   => $reason,
+                'reason'   => $response->getReasonPhrase(),
                 'duration' => $duration,
                 'size'     => strlen($responseBody),
                 'body'     => $responseBody
             ]);
 
         } catch (Throwable $e) {
-
             log_message(
                 'error',
                 'API Explorer Error: ' . $e->getMessage()
@@ -292,28 +318,26 @@ public function index()
     }
 
     /**
-     * Menghasilkan response error JSON.
+     * Response error JSON.
      */
     private function jsonError(
         string $message,
         int $httpStatus = 400
     ) {
-        $responseData = [
-            'success'  => false,
-            'status'   => $httpStatus,
-            'reason'   => $this->getStatusReason($httpStatus),
-            'duration' => 0,
-            'size'     => strlen($message),
-            'body'     => $message
-        ];
-
         return $this->response
             ->setStatusCode($httpStatus)
-            ->setJSON($responseData);
+            ->setJSON([
+                'success'  => false,
+                'status'   => $httpStatus,
+                'reason'   => $this->getStatusReason($httpStatus),
+                'duration' => 0,
+                'size'     => strlen($message),
+                'body'     => $message
+            ]);
     }
 
     /**
-     * Mendapatkan nama status HTTP.
+     * Nama status HTTP.
      */
     private function getStatusReason(int $status): string
     {

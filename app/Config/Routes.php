@@ -72,7 +72,10 @@ $routes->group('api', [
     $routes->put('dosen/(:num)', 'Dosen::update/$1', [
         'filter' => 'apiKey'
     ]);
-
+    // PATCH
+$routes->patch('dosen/(:num)', 'Dosen::update/$1', [
+    'filter' => 'apiKey'
+]);
     // DELETE
     $routes->delete('dosen/(:num)', 'Dosen::delete/$1', [
         'filter' => 'apiKey'
