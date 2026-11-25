@@ -298,13 +298,13 @@
                     id="method"
                     class="form-select method-select">
 
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="PATCH">PATCH</option>
-                    <option value="DELETE">DELETE</option>
-                    <option value="HEAD">HEAD</option>
-                    <option value="OPTIONS">OPTIONS</option>
+                   <option value="GET">GET</option>
+<option value="POST">POST</option>
+<option value="PUT">PUT</option>
+<option value="PATCH">PATCH</option>
+<option value="DELETE">DELETE</option>
+<option value="HEAD">HEAD</option>
+<option value="OPTIONS">OPTIONS</option>
 
                 </select>
 
@@ -496,12 +496,13 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
 
+document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('apiRequestForm');
     const method = document.getElementById('method');
     const urlInput = document.getElementById('endpointUrl');
     const bodyInput = document.getElementById('bodyInput');
+    const apiKeyInput = document.getElementById('api_key');
 
     const requestBody = document.getElementById('requestBody');
     const sendButton = document.getElementById('sendButton');
@@ -511,60 +512,36 @@ document.addEventListener('DOMContentLoaded', function () {
     const responseDuration = document.getElementById('responseDuration');
     const responseSize = document.getElementById('responseSize');
     const responseContent = document.getElementById('responseContent');
-
     const copyButton = document.getElementById('copyResponse');
 
     let currentResponse = '';
     let parsedResponse = null;
     let currentTab = 'json';
 
-    // =====================================
-    // TAMPILKAN REQUEST BODY
-    // =====================================
-
+    // Tampilkan body hanya untuk POST dan PUT
     function updateBodyVisibility() {
-
-        const selected = method.value;
-
-        requestBody.classList.toggle(
-            'show',
-            selected === 'POST' ||
-            selected === 'PUT' ||
-            selected === 'PATCH'
-        );
+       requestBody.classList.toggle(
+    'show',
+    ['POST', 'PUT', 'PATCH'].includes(method.value)
+);
     }
 
     method.addEventListener('change', updateBodyVisibility);
     updateBodyVisibility();
 
-    // =====================================
-    // ENDPOINT CEPAT
-    // =====================================
-
-    document.querySelectorAll('.quick-btn').forEach(function (button) {
-
+    // Endpoint cepat
+    document.querySelectorAll('.quick-btn').forEach(button => {
         button.addEventListener('click', function () {
-
             urlInput.value = this.dataset.url;
             method.value = 'GET';
             bodyInput.value = '';
-
             updateBodyVisibility();
-
         });
-
     });
 
-    // =====================================
-    // RENDER JSON
-    // =====================================
-
     function renderJson(data) {
-
         const pre = document.createElement('pre');
-
         pre.className = 'response-code';
-
         pre.textContent = typeof data === 'string'
             ? data
             : JSON.stringify(data, null, 4);
@@ -572,43 +549,27 @@ document.addEventListener('DOMContentLoaded', function () {
         responseContent.replaceChildren(pre);
     }
 
-    // =====================================
-    // RENDER RAW
-    // =====================================
-
-    function renderRaw(data) {
-
+    function renderRaw() {
         const pre = document.createElement('pre');
-
         pre.className = 'response-code';
         pre.textContent = currentResponse;
-
         responseContent.replaceChildren(pre);
     }
 
-    // =====================================
-    // RENDER TABEL
-    // =====================================
-
     function renderTable(data) {
-
         let rows = [];
 
         if (Array.isArray(data)) {
             rows = data;
-
         } else if (data && Array.isArray(data.data)) {
             rows = data.data;
-
         } else if (data && typeof data === 'object') {
             rows = [data];
         }
 
-        if (rows.length === 0 || typeof rows[0] !== 'object') {
-
+        if (!rows.length || typeof rows[0] !== 'object') {
             responseContent.textContent =
                 'Data tidak tersedia dalam format tabel.';
-
             return;
         }
 
@@ -625,12 +586,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
 
-        columns.forEach(function (column) {
-
+        columns.forEach(column => {
             const th = document.createElement('th');
-
             th.textContent = column;
-
             headerRow.appendChild(th);
         });
 
@@ -639,12 +597,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const tbody = document.createElement('tbody');
 
-        rows.forEach(function (row) {
-
+        rows.forEach(row => {
             const tr = document.createElement('tr');
 
-            columns.forEach(function (column) {
-
+            columns.forEach(column => {
                 const td = document.createElement('td');
                 const value = row[column];
 
@@ -661,65 +617,69 @@ document.addEventListener('DOMContentLoaded', function () {
 
         table.appendChild(tbody);
         wrapper.appendChild(table);
-
         responseContent.replaceChildren(wrapper);
     }
 
-    // =====================================
-    // RENDER TAB
-    // =====================================
-
     function renderCurrentTab() {
-
         if (currentTab === 'raw') {
-
-            renderRaw(parsedResponse);
-
+            renderRaw();
         } else if (currentTab === 'table') {
-
             renderTable(parsedResponse);
-
         } else {
-
             renderJson(parsedResponse);
         }
     }
 
-    // =====================================
-    // PILIHAN TAB RESPONSE
-    // =====================================
-
-    document.querySelectorAll('.response-tab').forEach(function (tab) {
-
+    // Tab JSON, Tabel, Raw
+    document.querySelectorAll('.response-tab').forEach(tab => {
         tab.addEventListener('click', function () {
-
-            document.querySelectorAll('.response-tab').forEach(
-                item => item.classList.remove('active')
-            );
+            document.querySelectorAll('.response-tab').forEach(item => {
+                item.classList.remove('active');
+            });
 
             this.classList.add('active');
-
             currentTab = this.dataset.tab;
 
             if (currentResponse !== '') {
                 renderCurrentTab();
             }
-
         });
-
     });
 
-    // =====================================
-    // KIRIM REQUEST
-    // =====================================
-
+    // Kirim request
     form.addEventListener('submit', async function (event) {
-
         event.preventDefault();
 
-        if (!urlInput.value.trim()) {
+        const url = urlInput.value.trim();
+        const selectedMethod = method.value;
+        const body = bodyInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+
+        if (!url) {
             alert('Masukkan URL endpoint terlebih dahulu.');
             return;
+        }
+
+        if (![
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'HEAD',
+    'OPTIONS'
+].includes(selectedMethod)) {
+    alert('Metode HTTP tidak valid.');
+    return;
+}
+
+        if (['POST', 'PUT'].includes(selectedMethod) && body) {
+            try {
+                JSON.parse(body);
+            } catch (error) {
+                alert('Format JSON tidak valid.');
+                return;
+            }
         }
 
         sendButton.disabled = true;
@@ -737,103 +697,145 @@ document.addEventListener('DOMContentLoaded', function () {
 
         copyButton.disabled = true;
 
+        const start = performance.now();
+
         try {
+            const targetUrl = new URL(url, window.location.href);
+            let response;
+            let responseText;
 
-            const formData = new FormData(form);
-
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
+            // API Kelompok 4 pada domain yang sama:
+            // panggil langsung tanpa cURL server-ke-server.
+            if (targetUrl.origin === window.location.origin) {
+                const headers = {
                     'Accept': 'application/json'
+                };
+
+                if (apiKey !== '') {
+                    headers['X-API-KEY'] = apiKey;
                 }
-            });
 
-            const result = await response.json();
+                const options = {
+                    method: selectedMethod,
+                    headers: headers,
+                    credentials: 'same-origin'
+                };
 
-            currentResponse = result.body ?? '';
-            parsedResponse = currentResponse;
+                if (['POST', 'PUT', 'PATCH'].includes(selectedMethod)) {
+    headers['Content-Type'] = 'application/json';
 
-            try {
+    if (body !== '') {
+        options.body = body;
+    }
+}
 
-                parsedResponse = JSON.parse(currentResponse);
+                response = await fetch(targetUrl.href, options);
+                responseText = await response.text();
 
-            } catch (error) {
+            } else {
+                // API eksternal tetap melalui controller proxy.
+                const formData = new FormData(form);
 
-                // Respons bukan JSON, tetap tampilkan sebagai teks.
+                response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
 
+                const proxyResult = await response.json();
+
+                responseText = proxyResult.body ?? '';
+                const duration = Math.round(performance.now() - start);
+
+                responseStatus.textContent =
+                    `${proxyResult.status} ${proxyResult.reason || ''}`;
+
+                responseStatus.className =
+                    proxyResult.status >= 200 && proxyResult.status < 300
+                        ? 'response-status'
+                        : 'response-status error';
+
+                responseDuration.textContent =
+                    `Waktu: ${proxyResult.duration ?? duration} ms`;
+
+                responseSize.textContent =
+                    `Ukuran: ${proxyResult.size ?? responseText.length} bytes`;
+
+                currentResponse = responseText;
+
+                try {
+                    parsedResponse = JSON.parse(responseText);
+                } catch (error) {
+                    parsedResponse = responseText;
+                }
+
+                renderCurrentTab();
+                copyButton.disabled = responseText === '';
+                return;
             }
 
-            const status = Number(result.status || 0);
+            const duration = Math.round(performance.now() - start);
 
-            responseStatus.textContent = status
-                ? `${status} ${result.reason || ''}`
-                : (result.reason || 'Request Error');
+            currentResponse = responseText;
+
+            try {
+                parsedResponse = JSON.parse(responseText);
+            } catch (error) {
+                parsedResponse = responseText;
+            }
+
+            responseStatus.textContent =
+                `${response.status} ${response.statusText}`;
 
             responseStatus.className =
-                status >= 200 && status < 300
+                response.ok
                     ? 'response-status'
                     : 'response-status error';
 
-            responseDuration.textContent =
-                `Waktu: ${result.duration ?? 0} ms`;
-
+            responseDuration.textContent = `Waktu: ${duration} ms`;
             responseSize.textContent =
-                `Ukuran: ${result.size ?? 0} bytes`;
+                `Ukuran: ${new Blob([responseText]).size} bytes`;
 
             renderCurrentTab();
-
-            copyButton.disabled = currentResponse === '';
+            copyButton.disabled = responseText === '';
 
         } catch (error) {
-
             currentResponse = error.message;
             parsedResponse = error.message;
 
             responseStatus.textContent = 'Connection Error';
             responseStatus.className = 'response-status error';
 
-            responseContent.textContent = error.message;
+            responseContent.textContent =
+                'Request gagal: ' + error.message;
 
         } finally {
-
             sendButton.disabled = false;
             sendText.textContent = '➤ Send';
-
         }
-
     });
 
-    // =====================================
-    // SALIN RESPONSE
-    // =====================================
-
+    // Salin response
     copyButton.addEventListener('click', async function () {
-
         if (!currentResponse) return;
 
         try {
-
             await navigator.clipboard.writeText(currentResponse);
-
             copyButton.textContent = '✓ Tersalin';
 
             setTimeout(() => {
-
                 copyButton.textContent = '📋 Salin Response';
-
             }, 1500);
 
         } catch (error) {
-
             alert('Tidak dapat menyalin response.');
-
         }
-
     });
-
 });
+
 </script>
 
 <?= $this->endSection() ?>

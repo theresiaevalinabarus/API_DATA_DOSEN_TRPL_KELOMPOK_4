@@ -274,7 +274,19 @@ class Dosen extends BaseController
                 ]);
         }
     }
+// =====================================
+// OPTIONS: INFORMASI HTTP METHOD
+// =====================================
 
+public function options()
+{
+    return $this->response
+        ->setHeader(
+            'Allow',
+            'GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS'
+        )
+        ->setStatusCode(204);
+}
     // =====================================
     // GET: CEK KONEKSI DATABASE
     // =====================================

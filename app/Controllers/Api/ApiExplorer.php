@@ -25,7 +25,7 @@ class ApiExplorer extends Controller
             ? rtrim($group3BaseUrl, '/') . '/matkul'
             : '';
 
-        $group4Url = 'https://api-data-dosen-trpl-kelompok-4.hostless.app/index.php/api/dosen';
+       $group4Url = site_url('api/dosen');
 
         if ($group === '2') {
             $heading = 'Jadwal Kuliah';

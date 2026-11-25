@@ -81,7 +81,13 @@ $routes->patch('dosen/(:num)', 'Dosen::update/$1', [
         'filter' => 'apiKey'
     ]);
 });
+// HEAD
+$routes->head('dosen', 'Dosen::index');
+$routes->head('dosen/(:num)', 'Dosen::show/$1');
 
+// OPTIONS
+$routes->options('dosen', 'Dosen::options');
+$routes->options('dosen/(:num)', 'Dosen::options');
 // =====================================
 // WEBSITE DATA DOSEN PUBLIK
 // =====================================
