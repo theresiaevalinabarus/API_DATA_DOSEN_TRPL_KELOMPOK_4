@@ -14,16 +14,13 @@ class ApiExplorer extends Controller
     {
         $group = (string) $this->request->getGet('group');
 
-        $group2BaseUrl = trim((string) getenv('API_GROUP2_BASE_URL'));
-        $group3BaseUrl = trim((string) getenv('API_GROUP3_BASE_URL'));
+       $group2BaseUrl = trim((string) getenv('API_GROUP2_BASE_URL'));
 
-        $group2Url = $group2BaseUrl !== ''
-            ? rtrim($group2BaseUrl, '/')
-            : '';
+$group2Url = $group2BaseUrl !== ''
+    ? rtrim($group2BaseUrl, '/')
+    : '';
 
-        $group3Url = $group3BaseUrl !== ''
-            ? rtrim($group3BaseUrl, '/') . '/matkul'
-            : '';
+$group3Url = base_url('matkul_proxy.php?path=matkul');
 
        $group4Url = site_url('api/dosen');
 

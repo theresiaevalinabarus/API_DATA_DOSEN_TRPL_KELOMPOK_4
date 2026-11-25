@@ -346,7 +346,7 @@
                 <small class="text-muted d-block mt-2">
                     Kosongkan untuk akses publik terbatas.
                     API Key yang benar diperlukan untuk akses lengkap,
-                    POST, PUT, dan DELETE.
+                    POST, PUT,PATCH dan DELETE.
                 </small>
 
             </div>
@@ -673,7 +673,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
 }
 
-        if (['POST', 'PUT'].includes(selectedMethod) && body) {
+     if (['POST', 'PUT', 'PATCH'].includes(selectedMethod) && body) {
             try {
                 JSON.parse(body);
             } catch (error) {
