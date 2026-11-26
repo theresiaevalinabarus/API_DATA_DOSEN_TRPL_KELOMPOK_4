@@ -23,10 +23,10 @@ class IntegrasiApi extends BaseController
     public function index()
     {
         try {
-            // Mengambil data dosen dari database Kelompok 4
+            // Mengambil data dosen Kelompok 4
             $dosen = $this->dosenModel->findAll();
 
-            // Mengambil data mata kuliah dari API Kelompok 3
+            // Mengambil data mata kuliah Kelompok 3
             $matkul = $this->getDataMataKuliah();
 
             return $this->response->setJSON([
@@ -47,6 +47,7 @@ class IntegrasiApi extends BaseController
 
                 'integrasi' => [
                     'api_dosen' => 'Terhubung',
+
                     'api_matkul' => $matkul['status']
                         ? 'Terhubung'
                         : 'Tidak terhubung',
@@ -97,14 +98,12 @@ class IntegrasiApi extends BaseController
 
                 'data' => [
                     'dosen' => $dosen,
-
-                    // Belum diisi karena belum ada tabel
-                    // atau API penghubung dosen dan mata kuliah.
                     'mata_kuliah' => []
                 ],
 
                 'integrasi' => [
                     'api_dosen' => 'Terhubung',
+
                     'api_matkul' => $matkul['status']
                         ? 'Terhubung'
                         : 'Tidak terhubung',
@@ -132,16 +131,22 @@ class IntegrasiApi extends BaseController
     private function getDataMataKuliah(): array
     {
         try {
-            $url = base_url('matkul_proxy.php?path=matkul');
+            // URL proxy Kelompok 3
+            $url = 'https://api-data-dosen-trpl-kelompok-4.hostless.app/matkul_proxy.php?path=matkul';
 
             $client = Services::curlrequest();
 
             $response = $client->get($url, [
-                'timeout' => 30,
-                'connect_timeout' => 10,
+                'timeout' => 45,
+                'connect_timeout' => 15,
                 'http_errors' => false,
-                'verify' => true
+                'verify' => true,
+                'headers' => [
+                    'Accept' => 'application/json'
+                ]
             ]);
+
+            $httpStatus = $response->getStatusCode();
 
             $result = json_decode(
                 $response->getBody(),
@@ -149,7 +154,7 @@ class IntegrasiApi extends BaseController
             );
 
             if (
-                $response->getStatusCode() !== 200 ||
+                $httpStatus !== 200 ||
                 !is_array($result) ||
                 !($result['status'] ?? false)
             ) {
@@ -157,7 +162,8 @@ class IntegrasiApi extends BaseController
                     'status' => false,
                     'total' => 0,
                     'data' => [],
-                    'message' => 'Gagal mengambil data Mata Kuliah'
+                    'message' => 'Gagal mengambil data Mata Kuliah',
+                    'http_status' => $httpStatus
                 ];
             }
 
