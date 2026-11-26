@@ -48,13 +48,18 @@ $routes->post('api-explorer/send', 'Api\ApiExplorer::send', [
     'filter' => 'auth'
 ]);
 
-// =====================================
-// API DATA DOSEN TRPL KELOMPOK 4
-// =====================================
+
+ // =====================================
+ // API DATA DOSEN DAN INTEGRASI
+ // =====================================
 
 $routes->group('api', [
     'namespace' => 'App\Controllers\Api'
 ], function ($routes) {
+
+    // =================================
+    // API DATA DOSEN
+    // =================================
 
     // GET
     $routes->get('cek-koneksi', 'Dosen::cekKoneksi');
@@ -72,56 +77,24 @@ $routes->group('api', [
     $routes->put('dosen/(:num)', 'Dosen::update/$1', [
         'filter' => 'apiKey'
     ]);
+
     // PATCH
-$routes->patch('dosen/(:num)', 'Dosen::update/$1', [
-    'filter' => 'apiKey'
-]);
+    $routes->patch('dosen/(:num)', 'Dosen::update/$1', [
+        'filter' => 'apiKey'
+    ]);
+
     // DELETE
     $routes->delete('dosen/(:num)', 'Dosen::delete/$1', [
         'filter' => 'apiKey'
     ]);
+
+    // =================================
+    // API INTEGRASI KELOMPOK 4
+    // =================================
+
+    // GET semua data dosen dan mata kuliah
+    $routes->get('integrasi', 'IntegrasiApi::index');
+
+    // GET detail integrasi berdasarkan ID dosen
+    $routes->get('integrasi/dosen/(:num)', 'IntegrasiApi::show/$1');
 });
-// HEAD
-$routes->head('dosen', 'Dosen::index');
-$routes->head('dosen/(:num)', 'Dosen::show/$1');
-
-// OPTIONS
-$routes->options('dosen', 'Dosen::options');
-$routes->options('dosen/(:num)', 'Dosen::options');
-// =====================================
-// WEBSITE DATA DOSEN PUBLIK
-// =====================================
-
-$routes->get('direktori-dosen', 'DosenWeb::publik');
-
-// =====================================
-// WEBSITE DATA DOSEN ADMIN
-// =====================================
-
-$routes->get('dosen', 'DosenWeb::index', [
-    'filter' => 'auth'
-]);
-
-$routes->get('dosen/tambah', 'DosenWeb::create', [
-    'filter' => 'auth'
-]);
-
-$routes->post('dosen/simpan', 'DosenWeb::store', [
-    'filter' => 'auth'
-]);
-
-$routes->get('dosen/edit/(:num)', 'DosenWeb::edit/$1', [
-    'filter' => 'auth'
-]);
-
-$routes->post('dosen/update/(:num)', 'DosenWeb::update/$1', [
-    'filter' => 'auth'
-]);
-
-$routes->post('dosen/hapus/(:num)', 'DosenWeb::delete/$1', [
-    'filter' => 'auth'
-]);
-
-$routes->get('dosen/(:num)', 'DosenWeb::detail/$1', [
-    'filter' => 'auth'
-]);
