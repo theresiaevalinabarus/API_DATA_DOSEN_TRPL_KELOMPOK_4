@@ -41,7 +41,9 @@ class IntegrasiApi extends BaseController
 
                     'mata_kuliah' => [
                         'total' => $matkul['total'],
-                        'data' => $matkul['data']
+                        'data' => $matkul['data'],
+                        'message' => $matkul['message'],
+                        'http_status' => $matkul['http_status']
                     ]
                 ],
 
@@ -55,6 +57,7 @@ class IntegrasiApi extends BaseController
                     'api_jadwal' => 'Belum tersedia',
                     'relasi_dosen_matkul' => 'Belum tersedia'
                 ]
+
             ])->setStatusCode(200);
 
         } catch (Throwable $e) {
@@ -81,6 +84,7 @@ class IntegrasiApi extends BaseController
                 ])->setStatusCode(400);
             }
 
+            // Mencari dosen berdasarkan ID
             $dosen = $this->dosenModel->find($id);
 
             if (!$dosen) {
@@ -90,6 +94,7 @@ class IntegrasiApi extends BaseController
                 ])->setStatusCode(404);
             }
 
+            // Mengambil data mata kuliah
             $matkul = $this->getDataMataKuliah();
 
             return $this->response->setJSON([
@@ -98,6 +103,9 @@ class IntegrasiApi extends BaseController
 
                 'data' => [
                     'dosen' => $dosen,
+
+                    // Belum tersedia karena belum ada
+                    // data penghubung dosen dan mata kuliah.
                     'mata_kuliah' => []
                 ],
 
@@ -112,7 +120,13 @@ class IntegrasiApi extends BaseController
 
                     'keterangan' =>
                         'Relasi dosen dan mata kuliah menunggu data penghubung.'
+                ],
+
+                'diagnostik_matkul' => [
+                    'message' => $matkul['message'],
+                    'http_status' => $matkul['http_status']
                 ]
+
             ])->setStatusCode(200);
 
         } catch (Throwable $e) {
@@ -142,17 +156,17 @@ class IntegrasiApi extends BaseController
                 'http_errors' => false,
                 'verify' => true,
                 'headers' => [
-                    'Accept' => 'application/json'
+                    'Accept' => 'application/json',
+                    'User-Agent' => 'Mozilla/5.0'
                 ]
             ]);
 
             $httpStatus = $response->getStatusCode();
+            $responseBody = $response->getBody();
 
-            $result = json_decode(
-                $response->getBody(),
-                true
-            );
+            $result = json_decode($responseBody, true);
 
+            // Memeriksa status HTTP dan format JSON
             if (
                 $httpStatus !== 200 ||
                 !is_array($result) ||
@@ -162,16 +176,32 @@ class IntegrasiApi extends BaseController
                     'status' => false,
                     'total' => 0,
                     'data' => [],
-                    'message' => 'Gagal mengambil data Mata Kuliah',
+                    'message' => is_array($result)
+                        ? ($result['message'] ?? 'Respons API Mata Kuliah tidak valid')
+                        : 'Respons proxy bukan JSON yang valid',
+                    'http_status' => $httpStatus
+                ];
+            }
+
+            // Memastikan data mata kuliah berbentuk array
+            $dataMatkul = $result['data'] ?? [];
+
+            if (!is_array($dataMatkul)) {
+                return [
+                    'status' => false,
+                    'total' => 0,
+                    'data' => [],
+                    'message' => 'Format data Mata Kuliah tidak sesuai',
                     'http_status' => $httpStatus
                 ];
             }
 
             return [
                 'status' => true,
-                'total' => $result['total'] ?? count($result['data'] ?? []),
-                'data' => $result['data'] ?? [],
-                'message' => 'Data Mata Kuliah berhasil diambil'
+                'total' => $result['total'] ?? count($dataMatkul),
+                'data' => $dataMatkul,
+                'message' => 'Data Mata Kuliah berhasil diambil',
+                'http_status' => $httpStatus
             ];
 
         } catch (Throwable $e) {
@@ -180,7 +210,8 @@ class IntegrasiApi extends BaseController
                 'status' => false,
                 'total' => 0,
                 'data' => [],
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'http_status' => 0
             ];
         }
     }
