@@ -51,10 +51,42 @@ $routes->post('api-explorer/send', 'Api\ApiExplorer::send', [
 // HALAMAN WEB DATA DOSEN
 // =====================================
 
+// Menampilkan daftar dosen
 $routes->get('dosen', 'DosenWeb::index', [
     'filter' => 'auth'
 ]);
 
+// Menampilkan detail dosen
+$routes->get('dosen/(:num)', 'DosenWeb::detail/$1', [
+    'filter' => 'auth'
+]);
+
+// Form tambah dosen
+$routes->get('dosen/create', 'DosenWeb::create', [
+    'filter' => 'auth'
+]);
+
+// Menyimpan dosen baru
+$routes->post('dosen/store', 'DosenWeb::store', [
+    'filter' => 'auth'
+]);
+
+// Form edit dosen
+$routes->get('dosen/edit/(:num)', 'DosenWeb::edit/$1', [
+    'filter' => 'auth'
+]);
+
+// Memperbarui dosen
+$routes->post('dosen/update/(:num)', 'DosenWeb::update/$1', [
+    'filter' => 'auth'
+]);
+
+// Menghapus dosen
+$routes->post('dosen/delete/(:num)', 'DosenWeb::delete/$1', [
+    'filter' => 'auth'
+]);
+// Direktori Dosen (akses publik tanpa login)
+$routes->get('direktori-dosen', 'DosenWeb::publik');
  // =====================================
  // API DATA DOSEN DAN INTEGRASI
  // =====================================
