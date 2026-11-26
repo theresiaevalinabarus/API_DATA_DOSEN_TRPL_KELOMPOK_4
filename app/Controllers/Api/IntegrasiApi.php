@@ -4,16 +4,18 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Models\DosenModel;
-use Config\Services;
+use App\Libraries\MatkulApiClient;
 use Throwable;
 
 class IntegrasiApi extends BaseController
 {
     protected DosenModel $dosenModel;
+    protected MatkulApiClient $matkulApiClient;
 
     public function __construct()
     {
         $this->dosenModel = new DosenModel();
+        $this->matkulApiClient = new MatkulApiClient();
     }
 
     /**
@@ -139,73 +141,12 @@ class IntegrasiApi extends BaseController
     }
 
     /**
-     * Mengambil data Mata Kuliah dari API Kelompok 3.
+     * Mengambil data Mata Kuliah menggunakan MatkulApiClient.
      */
     private function getDataMataKuliah(): array
     {
         try {
-            // Endpoint asli API Mata Kuliah Kelompok 3
-            $url = 'https://siakad-matkul.rf.gd/api/matkul';
-
-            $client = Services::curlrequest();
-
-            $response = $client->get($url, [
-                'timeout' => 30,
-                'connect_timeout' => 10,
-                'http_errors' => false,
-                'verify' => true,
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'User-Agent' => 'Mozilla/5.0'
-                ]
-            ]);
-
-            $httpStatus = $response->getStatusCode();
-
-            $responseBody = $response->getBody();
-
-            $result = json_decode(
-                $responseBody,
-                true
-            );
-
-            // Memeriksa respons API
-            if (
-                $httpStatus !== 200 ||
-                !is_array($result) ||
-                !($result['status'] ?? false)
-            ) {
-                return [
-                    'status' => false,
-                    'total' => 0,
-                    'data' => [],
-                    'message' => is_array($result)
-                        ? ($result['message'] ?? 'API Mata Kuliah gagal diakses atau membutuhkan verifikasi InfinityFree')
-                        : 'Respons API bukan JSON yang valid',
-                    'http_status' => $httpStatus
-                ];
-            }
-
-            $dataMatkul = $result['data'] ?? [];
-
-            if (!is_array($dataMatkul)) {
-                return [
-                    'status' => false,
-                    'total' => 0,
-                    'data' => [],
-                    'message' => 'Format data Mata Kuliah tidak sesuai',
-                    'http_status' => $httpStatus
-                ];
-            }
-
-            // Data berhasil diambil
-            return [
-                'status' => true,
-                'total' => $result['total'] ?? count($dataMatkul),
-                'data' => $dataMatkul,
-                'message' => 'Data Mata Kuliah berhasil diambil',
-                'http_status' => $httpStatus
-            ];
+            return $this->matkulApiClient->getMataKuliah();
 
         } catch (Throwable $e) {
 
