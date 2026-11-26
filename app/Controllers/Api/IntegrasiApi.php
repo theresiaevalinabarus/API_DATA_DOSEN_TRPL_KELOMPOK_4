@@ -23,10 +23,10 @@ class IntegrasiApi extends BaseController
     public function index()
     {
         try {
-            // Mengambil data dosen Kelompok 4
+            // Mengambil data Dosen Kelompok 4
             $dosen = $this->dosenModel->findAll();
 
-            // Mengambil data mata kuliah Kelompok 3
+            // Mengambil data Mata Kuliah Kelompok 3
             $matkul = $this->getDataMataKuliah();
 
             return $this->response->setJSON([
@@ -94,7 +94,7 @@ class IntegrasiApi extends BaseController
                 ])->setStatusCode(404);
             }
 
-            // Mengambil data mata kuliah
+            // Mengambil data Mata Kuliah
             $matkul = $this->getDataMataKuliah();
 
             return $this->response->setJSON([
@@ -104,8 +104,7 @@ class IntegrasiApi extends BaseController
                 'data' => [
                     'dosen' => $dosen,
 
-                    // Belum tersedia karena belum ada
-                    // data penghubung dosen dan mata kuliah.
+                    // Relasi belum tersedia
                     'mata_kuliah' => []
                 ],
 
@@ -140,19 +139,19 @@ class IntegrasiApi extends BaseController
     }
 
     /**
-     * Mengambil data Mata Kuliah dari proxy Kelompok 3.
+     * Mengambil data Mata Kuliah dari API Kelompok 3.
      */
     private function getDataMataKuliah(): array
     {
         try {
-            // URL proxy Kelompok 3
-            $url = 'https://api-data-dosen-trpl-kelompok-4.hostless.app/matkul_proxy.php?path=matkul';
+            // Endpoint asli API Mata Kuliah Kelompok 3
+            $url = 'https://siakad-matkul.rf.gd/api/matkul';
 
             $client = Services::curlrequest();
 
             $response = $client->get($url, [
-                'timeout' => 45,
-                'connect_timeout' => 15,
+                'timeout' => 30,
+                'connect_timeout' => 10,
                 'http_errors' => false,
                 'verify' => true,
                 'headers' => [
@@ -162,11 +161,15 @@ class IntegrasiApi extends BaseController
             ]);
 
             $httpStatus = $response->getStatusCode();
+
             $responseBody = $response->getBody();
 
-            $result = json_decode($responseBody, true);
+            $result = json_decode(
+                $responseBody,
+                true
+            );
 
-            // Memeriksa status HTTP dan format JSON
+            // Memeriksa respons API
             if (
                 $httpStatus !== 200 ||
                 !is_array($result) ||
@@ -177,13 +180,12 @@ class IntegrasiApi extends BaseController
                     'total' => 0,
                     'data' => [],
                     'message' => is_array($result)
-                        ? ($result['message'] ?? 'Respons API Mata Kuliah tidak valid')
-                        : 'Respons proxy bukan JSON yang valid',
+                        ? ($result['message'] ?? 'API Mata Kuliah gagal diakses atau membutuhkan verifikasi InfinityFree')
+                        : 'Respons API bukan JSON yang valid',
                     'http_status' => $httpStatus
                 ];
             }
 
-            // Memastikan data mata kuliah berbentuk array
             $dataMatkul = $result['data'] ?? [];
 
             if (!is_array($dataMatkul)) {
@@ -196,6 +198,7 @@ class IntegrasiApi extends BaseController
                 ];
             }
 
+            // Data berhasil diambil
             return [
                 'status' => true,
                 'total' => $result['total'] ?? count($dataMatkul),
