@@ -85,6 +85,21 @@ $routes->post('dosen/update/(:num)', 'DosenWeb::update/$1', [
 $routes->post('dosen/delete/(:num)', 'DosenWeb::delete/$1', [
     'filter' => 'auth'
 ]);
+
+// Form tambah dosen (alamat lama yang masih digunakan tombol)
+$routes->get('dosen/tambah', 'DosenWeb::create', [
+    'filter' => 'auth'
+]);
+
+// Menyimpan dosen (alamat lama dari form)
+$routes->post('dosen/simpan', 'DosenWeb::store', [
+    'filter' => 'auth'
+]);
+
+// Menghapus dosen (alamat lama dari tombol hapus)
+$routes->post('dosen/hapus/(:num)', 'DosenWeb::delete/$1', [
+    'filter' => 'auth'
+]);
 // Direktori Dosen (akses publik tanpa login)
 $routes->get('direktori-dosen', 'DosenWeb::publik');
  // =====================================
