@@ -163,11 +163,11 @@ class DosenWeb extends BaseController
     // FORM TAMBAH DOSEN
     // ==========================================
     public function create()
-    {
-        return view('dosen/form', [
-            'dosen' => []
-        ]);
-    }
+{
+    return view('dosen/form', [
+        'dosen' => []
+    ]);
+}
 
     // ==========================================
     // FORM EDIT DOSEN

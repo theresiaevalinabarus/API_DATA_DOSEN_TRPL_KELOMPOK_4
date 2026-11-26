@@ -203,9 +203,9 @@ if (in_array($jenisKelamin, ['L', 'LAKI-LAKI', 'LAKI LAKI'], true)) {
 
             <!-- Form Card -->
             <form
-                action="<?= $isEdit
-                    ? base_url('dosen/update/' . $dosen['id_dosen'])
-                    : base_url('dosen/simpan') ?>"
+               action="<?= $isEdit
+    ? site_url('dosen/update/' . $dosen['id_dosen'])
+    : site_url('dosen/store') ?>"
                 method="POST"
             >
 

@@ -655,7 +655,7 @@ $aktif = count(array_filter($dosenList, function ($item) {
 
                         <!-- TAMBAH DOSEN -->
                         <a
-                            href="<?= site_url('dosen/tambah') ?>"
+                            href="<?= site_url('dosen/create') ?>"
                             class="primary-button flex items-center
                                    justify-center gap-2 px-5 py-2.5
                                    bg-blue-600 hover:bg-blue-700
@@ -826,7 +826,7 @@ $aktif = count(array_filter($dosenList, function ($item) {
 
 
                                             <form
-                                                action="<?= site_url('dosen/hapus/' . $id) ?>"
+                                                action="<?= site_url('dosen/delete/' . $id) ?>"
                                                 method="POST"
                                                 onsubmit="return confirm('Apakah Anda yakin ingin menghapus data dosen ini?')"
                                             >
