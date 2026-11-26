@@ -47,7 +47,13 @@ $routes->get('api-explorer', 'Api\ApiExplorer::index', [
 $routes->post('api-explorer/send', 'Api\ApiExplorer::send', [
     'filter' => 'auth'
 ]);
+// =====================================
+// HALAMAN WEB DATA DOSEN
+// =====================================
 
+$routes->get('dosen', 'DosenWeb::index', [
+    'filter' => 'auth'
+]);
 
  // =====================================
  // API DATA DOSEN DAN INTEGRASI
