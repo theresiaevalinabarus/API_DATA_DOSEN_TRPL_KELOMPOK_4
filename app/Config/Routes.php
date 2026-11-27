@@ -109,7 +109,14 @@ $routes->get('direktori-dosen', 'DosenWeb::publik');
 $routes->group('api', [
     'namespace' => 'App\Controllers\Api'
 ], function ($routes) {
+// CORS Preflight
+$routes->options('dosen', static function () {
+    return service('response')->setStatusCode(204);
+});
 
+$routes->options('dosen/(:any)', static function () {
+    return service('response')->setStatusCode(204);
+});
     // =================================
     // API DATA DOSEN
     // =================================

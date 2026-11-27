@@ -10,6 +10,12 @@ class ApiKeyFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
+        // Izinkan preflight CORS tanpa API Key.
+        // Request sebenarnya tetap wajib menggunakan API Key.
+        if (strtoupper($request->getMethod()) === 'OPTIONS') {
+            return service('response')->setStatusCode(204);
+        }
+
         $apiKey = trim((string) env('API_ADMIN_KEY', ''));
         $requestKey = trim($request->getHeaderLine('X-API-KEY'));
 
