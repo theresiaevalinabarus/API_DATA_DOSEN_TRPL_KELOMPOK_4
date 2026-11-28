@@ -21,6 +21,36 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
+    <?php
+    // Menentukan halaman yang sedang dibuka
+    $currentPath = trim(service('uri')->getPath(), '/');
+
+    $activeMenu = $active ?? '';
+
+    if ($activeMenu === '') {
+        if ($currentPath === 'dashboard') {
+            $activeMenu = 'dashboard';
+        } elseif (
+            $currentPath === 'dosen' ||
+            str_starts_with($currentPath, 'dosen/')
+        ) {
+            $activeMenu = 'dosen';
+        } elseif ($currentPath === 'integrasi') {
+            $activeMenu = 'integrasi';
+        } elseif ($currentPath === 'api-explorer') {
+            $group = service('request')->getGet('group');
+
+            if ($group == '3') {
+                $activeMenu = 'matkul';
+            } elseif ($group == '2') {
+                $activeMenu = 'jadwal';
+            } else {
+                $activeMenu = 'api-explorer';
+            }
+        }
+    }
+    ?>
+
     <style>
         :root {
             --navy: #102d50;
@@ -58,6 +88,7 @@
             flex-direction: column;
             z-index: 1000;
             transition: .3s ease;
+            overflow-y: auto;
         }
 
         .brand {
@@ -134,6 +165,7 @@
             font-size: 17px;
             width: 20px;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .sidebar-footer {
@@ -272,7 +304,6 @@
         }
 
         @media(max-width: 900px) {
-
             .sidebar {
                 transform: translateX(-100%);
             }
@@ -307,7 +338,6 @@
         }
 
         @media(max-width: 500px) {
-
             .page-info h1 {
                 font-size: 19px;
             }
@@ -334,7 +364,6 @@
     <aside class="sidebar" id="sidebar">
 
         <div class="brand">
-
             <div class="brand-icon">
                 🎓
             </div>
@@ -345,72 +374,72 @@
                     TRPL Information System
                 </div>
             </div>
-
         </div>
 
         <div class="menu-label">
             MENU UTAMA
         </div>
 
-        
-<nav class="sidebar-menu">
+        <nav class="sidebar-menu">
 
-    <!-- DASHBOARD -->
-    <a
-        href="<?= site_url('dashboard') ?>"
-        class="<?= ($active ?? '') === 'dashboard' ? 'active' : '' ?>">
+            <!-- DASHBOARD -->
+            <a
+                href="<?= site_url('dashboard') ?>"
+                class="<?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
 
-        <span class="menu-icon">🏠</span>
-        Dashboard
-    </a>
+                <span class="menu-icon">🏠</span>
+                Dashboard
+            </a>
 
-    <!-- DATA DOSEN KELOMPOK 4 -->
-    <a
-        href="<?= site_url('dosen') ?>"
-        class="<?= ($active ?? '') === 'dosen' ? 'active' : '' ?>">
+            <!-- DATA DOSEN KELOMPOK 4 -->
+            <a
+                href="<?= site_url('dosen') ?>"
+                class="<?= $activeMenu === 'dosen' ? 'active' : '' ?>">
 
-        <span class="menu-icon">👨‍🏫</span>
-        Data Dosen
-    </a>
+                <span class="menu-icon">👨‍🏫</span>
+                Data Dosen
+            </a>
 
-    <!-- MATA KULIAH KELOMPOK 3 -->
-    <a
-        href="<?= site_url('api-explorer') ?>?group=3"
-        class="<?= ($active ?? '') === 'matkul' ? 'active' : '' ?>">
+            <!-- MATA KULIAH KELOMPOK 3 -->
+            <a
+                href="<?= site_url('api-explorer') ?>?group=3"
+                class="<?= $activeMenu === 'matkul' ? 'active' : '' ?>">
 
-        <span class="menu-icon">📚</span>
-        <span>
-            Mata Kuliah
-            <small style="display:block; font-size:10px; opacity:.75;">
-                Kelompok 3
-            </small>
-        </span>
-    </a>
+                <span class="menu-icon">📚</span>
 
-    <!-- JADWAL KULIAH KELOMPOK 2 -->
-    <a
-        href="<?= site_url('api-explorer') ?>?group=2"
-        class="<?= ($active ?? '') === 'jadwal' ? 'active' : '' ?>">
+                <span>
+                    Mata Kuliah
+                    <small style="display:block; font-size:10px; opacity:.75;">
+                        Kelompok 3
+                    </small>
+                </span>
+            </a>
 
-        <span class="menu-icon">📅</span>
-        <span>
-            Jadwal Kuliah
-            <small style="display:block; font-size:10px; opacity:.75;">
-                Kelompok 2
-            </small>
-        </span>
-    </a>
+            <!-- JADWAL KULIAH KELOMPOK 2 -->
+            <a
+                href="<?= site_url('api-explorer') ?>?group=2"
+                class="<?= $activeMenu === 'jadwal' ? 'active' : '' ?>">
 
-    <!-- INTEGRASI API -->
-    <a
-        href="<?= site_url('api-explorer') ?>"
-        class="<?= ($active ?? '') === 'api-explorer' ? 'active' : '' ?>">
+                <span class="menu-icon">📅</span>
 
-        <span class="menu-icon">🔌</span>
-        Integrasi API
-    </a>
+                <span>
+                    Jadwal Kuliah
+                    <small style="display:block; font-size:10px; opacity:.75;">
+                        Kelompok 2
+                    </small>
+                </span>
+            </a>
 
-</nav>
+            <!-- INTEGRASI API -->
+            <a
+                href="<?= site_url('integrasi') ?>"
+                class="<?= $activeMenu === 'integrasi' ? 'active' : '' ?>">
+
+                <span class="menu-icon">🔌</span>
+                Integrasi API
+            </a>
+
+        </nav>
 
         <div class="sidebar-footer">
             <strong>Kelompok 4</strong><br>
@@ -420,6 +449,7 @@
 
     </aside>
 
+    <!-- OVERLAY MOBILE -->
     <div
         class="sidebar-overlay"
         id="sidebarOverlay"
@@ -438,19 +468,15 @@
                     class="mobile-menu-btn"
                     type="button"
                     onclick="toggleSidebar()">
-
                     ☰
-
                 </button>
 
                 <div class="page-info">
-
                     <h1><?= esc($heading ?? 'Dashboard') ?></h1>
 
                     <p>
                         <?= esc($subtitle ?? 'Sistem Informasi Data Dosen TRPL') ?>
                     </p>
-
                 </div>
 
             </div>
@@ -489,13 +515,11 @@
 
     <script>
         function toggleSidebar() {
-
             document.getElementById('sidebar')
                 .classList.toggle('show');
 
             document.getElementById('sidebarOverlay')
                 .classList.toggle('show');
-
         }
     </script>
 
