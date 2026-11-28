@@ -95,7 +95,13 @@ $routes->get('dosen/tambah', 'DosenWeb::create', [
 $routes->post('dosen/simpan', 'DosenWeb::store', [
     'filter' => 'auth'
 ]);
+// =====================================
+// HALAMAN WEB INTEGRASI
+// =====================================
 
+$routes->get('integrasi', 'Integrasi::index', [
+    'filter' => 'auth'
+]);
 // Menghapus dosen (alamat lama dari tombol hapus)
 $routes->post('dosen/hapus/(:num)', 'DosenWeb::delete/$1', [
     'filter' => 'auth'
@@ -157,4 +163,5 @@ $routes->options('dosen/(:any)', static function () {
 
     // GET detail integrasi berdasarkan ID dosen
     $routes->get('integrasi/dosen/(:num)', 'IntegrasiApi::show/$1');
+    $routes->get('integrasi/cek-jadwal', 'IntegrasiApi::cekJadwal');
 });
